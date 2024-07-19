@@ -1,4 +1,4 @@
-const { hexToBase64, generateXOR } = require("./set-1");
+const { hexToBase64, xorHexStrings } = require("./set-1");
 
 describe('set-1', () => {
     test('C1: Convert hex to base64', () => {
@@ -11,7 +11,7 @@ describe('set-1', () => {
         const source = '1c0111001f010100061a024b53535009181c';
         const comparator = '686974207468652062756c6c277320657965';
 
-        const result = generateXOR(source, comparator);
+        const result = xorHexStrings(source, comparator);
 
         expect(result).toStrictEqual('746865206b696420646f6e277420706c6179');
     });

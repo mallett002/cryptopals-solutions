@@ -13,7 +13,7 @@ function xor(a, b) {
     return buffer;
 }
 
-function generateXOR(source, comparator) {
+function xorHexStrings(source, comparator) {
     const bufferOne = Buffer.from(source, 'hex');
     const bufferTwo = Buffer.from(comparator, 'hex');
 
@@ -22,5 +22,5 @@ function generateXOR(source, comparator) {
 
 module.exports = {
     hexToBase64,
-    generateXOR,
+    xorHexStrings,
 };

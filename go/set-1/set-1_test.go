@@ -14,3 +14,12 @@ func TestC1HexToBase64(t *testing.T) {
 
 	assert.Equal(t, base64String, result)
 }
+
+func TestC2FixedXOR(t *testing.T) {
+	source := "1c0111001f010100061a024b53535009181c";
+	comparator := "686974207468652062756c6c277320657965";
+
+	result := XORHexStrings(source, comparator);
+
+	assert.Equal(t, "746865206b696420646f6e277420706c6179", result)
+}
