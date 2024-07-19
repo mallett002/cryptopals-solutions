@@ -4,7 +4,7 @@ function hexToBase64(hexStr) {
 
 function xor(a, b) {
     const length = Math.max(a.length, b.length);
-    const buffer = Buffer.allocUnsafe(length);
+    const buffer = Buffer.alloc(length);
 
     for (let i = 0; i < length; i++) {
         buffer[i] = a[i] ^ b[i];
