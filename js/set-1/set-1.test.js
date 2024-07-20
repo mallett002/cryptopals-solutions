@@ -1,4 +1,4 @@
-const { hexToBase64, xorHexStrings } = require("./set-1");
+const { hexToBase64, xorHexStrings, findEncyptionKey } = require("./set-1");
 
 describe('set-1', () => {
     test('C1: Convert hex to base64', () => {
@@ -8,11 +8,20 @@ describe('set-1', () => {
     });
 
     test('C2: Fixed XOR', () => {
-        const source = '1c0111001f010100061a024b53535009181c';
-        const comparator = '686974207468652062756c6c277320657965';
+        const hexOne = '1c0111001f010100061a024b53535009181c';
+        const hexTwo = '686974207468652062756c6c277320657965';
 
-        const result = xorHexStrings(source, comparator);
+        const result = xorHexStrings(hexOne, hexTwo);
 
         expect(result).toStrictEqual('746865206b696420646f6e277420706c6179');
+    });
+
+    test('C3: Single-byte XOR cipher', () => {
+        const hexInput = '1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736';
+        const hiddenMessage = 'ETAOIN SHRDLU';
+        
+        const key = findEncyptionKey(hexInput);
+
+        expect(key).toStrictEqual(88);
     });
 });
