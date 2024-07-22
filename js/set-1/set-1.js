@@ -54,8 +54,13 @@ function scoreEnglishText(text) {
 
     return score;
 }
-
-// Determine which key was used to encrypt the given hex string
+ 
+/**
+ * Determines which single-byte key was used to encrypt the given hex string.
+ *
+ * @param {string} hexString - The hexadecimal string to analyze.
+ * @returns {number} The encryption key used as a decimal value.
+ */
 function findEncyptionKey(hexString) {
     const inputBytes = Buffer.from(hexString, 'hex');
     const largestHexLiteral = 0xFF; // 255
@@ -86,6 +91,13 @@ function findEncyptionKey(hexString) {
     return encryptionKey;
 }
 
+/**
+ * Decrypts a hexadecimal string using a single-byte XOR key.
+ *
+ * @param {string} hexString - The hexadecimal string to decrypt.
+ * @param {number} key - The single-byte XOR key used for decryption.
+ * @returns {string} The decrypted string.
+ */
 function xorDecrypt(hexString, key) {
     const hex = Buffer.from(hexString, 'hex');
 

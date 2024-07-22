@@ -30,4 +30,4 @@ describe('set-1' , () => {
         expect(key).toStrictEqual(88);
         expect(xorDecrypt(hexInput, key)).toStrictEqual("Cooking MC's like a pound of bacon");
     });
-    });
+});
