@@ -2,6 +2,7 @@ function hexToBase64(hexStr) {
     return Buffer.from(hexStr, 'hex').toString('base64');
 }
 
+// XOR each byte to create new array of bytes
 function xor(a, b) {
     const length = Math.max(a.length, b.length);
     const buffer = Buffer.alloc(length);
@@ -24,18 +25,34 @@ function isPrintableAscii(text) {
     return /^[\x20-\x7E]*$/.test(text);
 }
 
-// This is a naive approach
-function scoreText(text) {
-    console.log({textIs: text});
-    const spaces = text.match(/\s/g);
-
-    console.log({spaces});
-
-    if (spaces && spaces.length) {
-        return spaces.length
+function scoreEnglishText(text) {
+    if (!isPrintableAscii(text)) {
+        return 0;
     }
 
-    return 0;
+    const frequencyMap = {
+        e: 12.7, t: 9.06, a: 8.17, o: 7.51, i: 6.97, n: 6.75,
+        s: 6.33, h: 6.09, r: 5.99, d: 4.25, l: 4.02, c: 2.78,
+        u: 2.76, m: 2.41, w: 2.36, f: 2.23, g: 2.02, y: 1.97,
+        p: 1.93, b: 1.49, v: 0.98, k: 0.77, j: 0.15, x: 0.15,
+        q: 0.095, z: 0.074, ' ': 13
+    };
+
+    let score = 0;
+    let validCharCount = 0;
+
+    for (const char of text) {
+        const lower = char.toLowerCase();
+        
+        if (frequencyMap[lower]) {
+            score += frequencyMap[lower];
+            validCharCount++;
+        }
+    }
+    
+    score = validCharCount > 0 ? score / validCharCount : 0;
+
+    return score;
 }
 
 // Determine which key was used to encrypt the given hex string
@@ -50,18 +67,15 @@ function findEncyptionKey(hexString) {
     /* For each byte in all possible hex bytes, XOR against the input "hexString"'s bytes
     to produce a decrypted message */
     for (let key = 0; key <= largestHexLiteral; key++) {
-        const decryptedBytes = inputBytes.map((byte) => byte ^ key);
-        const decryptedText = Buffer.from(decryptedBytes).toString('utf8');
+        const decryptedBytes = inputBytes.map((byte) => byte ^ key); // decrypt each byte
+        const decryptedText = Buffer.from(decryptedBytes).toString('utf8'); // turn each byte into utf8 (text)
 
-        if (isPrintableAscii(decryptedText)) {
-            console.log({decryptedText});
-            const score = scoreText(decryptedText);
+        const score = scoreEnglishText(decryptedText);
 
-            if (score > highestScore) {
-                highestScore = score;
-                encryptionKey = key;
-                hiddenMessage = decryptedText;
-            }
+        if (score > highestScore) {
+            highestScore = score;
+            encryptionKey = key;
+            hiddenMessage = decryptedText;
         }
     }
 
@@ -72,8 +86,35 @@ function findEncyptionKey(hexString) {
     return encryptionKey;
 }
 
+function xorDecrypt(hexString, key) {
+    const hex = Buffer.from(hexString, 'hex');
+
+    let result = '';
+
+    for (let i = 0; i < hex.length; i++) {
+        result += String.fromCharCode(hex[i] ^ key);
+    }
+
+    return result;
+}
+
 module.exports = {
     hexToBase64,
     xorHexStrings,
     findEncyptionKey,
+    xorDecrypt,
 };
+
+// 1111
+// binary: 16 8 4 2 1
+//                 2^2(4) | 2^1(2) | 2^0(1)
+
+// Binary to Hex -----------------------
+//              0001 0011 0101 
+// decimal:        1    3    5
+// hex:            1    3    5
+// result:                 135
+
+// 1001 0111 1101
+//    9    7   13
+//    9    7    D
