@@ -23,3 +23,11 @@ func TestC2FixedXOR(t *testing.T) {
 
 	assert.Equal(t, "746865206b696420646f6e277420706c6179", result)
 }
+
+func TestC3SingleByteXOR(t *testing.T) {
+	hexInput := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+
+	key := FindEncyptionKey(hexInput);
+
+	assert.Equal(t, 88, key)
+}
