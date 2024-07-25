@@ -53,11 +53,11 @@ func FindEncyptionKey(hexInput string) int {
 	}
 
 	for key := 0; key < largestHex; key++ {
-		var decryptedBytes []byte = make([]byte, len(inputBytes))
+		var decryptedBytes []byte = make([]byte, 0, len(inputBytes))
 
-		for i, inputByte := range inputBytes {
+		for _, inputByte := range inputBytes {
 			decrypted := inputByte ^ byte(key)
-			decryptedBytes[i] = byte(decrypted)
+			decryptedBytes = append(decryptedBytes, byte(decrypted))
 		}
 
 		text := string(decryptedBytes)
