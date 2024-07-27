@@ -52,6 +52,9 @@ func FindEncyptionKey(hexInput string) int {
 		log.Fatal(err)
 	}
 
+	var topScore float32 = 0
+	var foundEncryptionKey = 0
+
 	for key := 0; key < largestHex; key++ {
 		var decryptedBytes []byte = make([]byte, 0, len(inputBytes))
 
@@ -63,13 +66,13 @@ func FindEncyptionKey(hexInput string) int {
 		text := string(decryptedBytes)
 		score := scoreEnglishText(text)
 
-		if score > 0 {
-			fmt.Printf("Key: %d, Text: %s\n", key, text)
+		if (score > topScore) {
+			topScore = score
+			foundEncryptionKey = key
 		}
-
 	}
 
-	return 0
+	return foundEncryptionKey
 }
 
 func isPrintableAsci(text string) bool {
@@ -78,12 +81,36 @@ func isPrintableAsci(text string) bool {
 	return re.MatchString(text)
 }
 
-func scoreEnglishText(text string) int {
+func scoreEnglishText(text string) float32 {
 	if !isPrintableAsci(text) {
 		return 0
 	}
 
-	// Todo: score this based on English letter frequency
+	var wordFrequencies map[rune]float32 = map[rune]float32{
+		'e': 12.7, 't': 9.06, 'a': 8.17, 'o': 7.51, 'i': 6.97, 'n': 6.75,
+		's': 6.33, 'h': 6.09, 'r': 5.99, 'd': 4.25, 'l': 4.02, 'c': 2.78,
+		'u': 2.76, 'm': 2.41, 'w': 2.36, 'f': 2.23, 'g': 2.02, 'y': 1.97,
+		'p': 1.93, 'b': 1.49, 'v': 0.98, 'k': 0.77, 'j': 0.15, 'x': 0.15,
+		'q': 0.095, 'z': 0.074, ' ': 13,
+	}
 
-	return 5
+	var score float32 = 0
+	validCharCount := 0
+
+	for _, char := range text {
+		var val, ok = wordFrequencies[char]
+
+		if ok {
+			score += val
+			validCharCount++
+		}
+	}
+
+	if validCharCount > 0 {
+		result := score / float32(validCharCount)
+
+		return result
+	}
+
+	return 0
 }
