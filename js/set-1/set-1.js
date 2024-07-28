@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 function hexToBase64(hexStr) {
     return Buffer.from(hexStr, 'hex').toString('base64');
 }
@@ -43,18 +46,18 @@ function scoreEnglishText(text) {
 
     for (const char of text) {
         const lower = char.toLowerCase();
-        
+
         if (frequencyMap[lower]) {
             score += frequencyMap[lower];
             validCharCount++;
         }
     }
-    
+
     score = validCharCount > 0 ? score / validCharCount : 0;
 
     return score;
 }
- 
+
 /**
  * Determines which single-byte key was used to encrypt the given hex string.
  *
@@ -64,7 +67,7 @@ function scoreEnglishText(text) {
 function findEncyptionKey(hexString) {
     const inputBytes = Buffer.from(hexString, 'hex');
     const largestHexLiteral = 0xFF; // 255
-    
+
     let encryptionKey = '';
     let hiddenMessage = '';
     let highestScore = 0;
@@ -88,7 +91,10 @@ function findEncyptionKey(hexString) {
     console.log('The highest score is: ', highestScore);
     console.log('The key in utf8 is: ', `"${Buffer.from([encryptionKey]).toString('utf8')}"`);
 
-    return encryptionKey;
+    return {
+        key: encryptionKey,
+        score: highestScore,
+    };
 }
 
 /**
@@ -110,11 +116,56 @@ function xorDecrypt(hexString, key) {
     return result;
 }
 
+async function findEncyptionKeyInFile(fileName) {
+    // read from the file
+    // find encryption key
+    // find the item with the highest score
+    // return key
+    const readLines = await new Promise((resolve, reject) => {
+        const stream = fs.createReadStream(path.join(__dirname, '..', 'data', fileName), 'utf-8');
+
+        const lines = [];
+
+        stream.on('error', (error) => {
+            console.log(`error: ${error.message}`);
+            reject(error);
+        });
+
+        stream.on('data', (line) => {
+            const splitLines = line.split('\n');
+
+            for (it of splitLines) {
+                lines.push(it);
+            }
+        });
+
+        stream.on('end', () => {
+            resolve(lines);
+        });
+
+    });
+
+    let highestScore = 0;
+    let foundKey = null;
+
+    for (const line of readLines) {
+        const { key, score } = findEncyptionKey(line);
+
+        if (score > highestScore) {
+            highestScore = score;
+            foundKey = key;
+        }
+    }
+
+    return foundKey;
+};
+
 module.exports = {
     hexToBase64,
     xorHexStrings,
     findEncyptionKey,
     xorDecrypt,
+    findEncyptionKeyInFile
 };
 
 // 1111

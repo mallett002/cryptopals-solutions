@@ -1,4 +1,5 @@
 const {
+    findEncyptionKeyInFile,
     hexToBase64,
     xorHexStrings,
     findEncyptionKey,
@@ -25,9 +26,17 @@ describe('set-1' , () => {
     test('C3: Single-byte XOR cipher', () => {
         const hexInput = '1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736';
 
-        const key = findEncyptionKey(hexInput);
+        const {key} = findEncyptionKey(hexInput);
 
         expect(key).toStrictEqual(88);
         expect(xorDecrypt(hexInput, key)).toStrictEqual("Cooking MC's like a pound of bacon");
+    });
+
+    test('C4: Detect single-character XOR', async () => {
+        const fileName = '4.txt';
+
+        const key = await findEncyptionKeyInFile(fileName);
+
+        expect(key).toStrictEqual(88);
     });
 });
