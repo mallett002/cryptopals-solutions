@@ -32,11 +32,11 @@ describe('set-1' , () => {
         expect(xorDecrypt(hexInput, key)).toStrictEqual("Cooking MC's like a pound of bacon");
     });
 
-    test('C4: Detect single-character XOR', async () => {
+    test('C3: Detect single-character XOR', async () => {
         const fileName = '4.txt';
 
         const key = await findEncyptionKeyInFile(fileName);
 
-        expect(key).toStrictEqual(88);
+        expect(key).toStrictEqual(53);
     });
 });
