@@ -118,6 +118,14 @@ function xorDecrypt(hexString, key) {
     return result;
 }
 
+
+/**
+ * Reads file, for each hex line decrypts with all possible hex bytes. *
+ * Returns the key (byte) that finds the decrypted text most similar to english text
+ *
+ * @param {string} fileName - The name of the file to read.
+ * @returns {number} The byte that was used to encrypt (XORing) in decimal.
+ */
 async function findEncyptionKeyInFile(fileName) {
     // read from the file
     const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8');
@@ -142,6 +150,14 @@ async function findEncyptionKeyInFile(fileName) {
     return foundKey;
 };
 
+
+/**
+ * Reads file, for each hex line decrypts with the provided key. *
+ * Returns the decrypted line that mostly resembles english text from the provided file. 
+ *
+ * @param {string} fileName - The name of the file to read.
+ * @returns {number} The byte that was used to encrypt (XORing) in decimal.
+ */
 function findTextFromFileWithKey(fileName, key) {
     const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8');
     const lines = file.split('\n');
