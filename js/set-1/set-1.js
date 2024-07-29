@@ -63,9 +63,7 @@ function scoreBytes(buffer) {
  * @returns {number} The encryption key used as a decimal value.
  */
 function findEncyptionKey(hexString) {
-    const inputBytes = Buffer.from(hexString, 'hex');
     const largestHexLiteral = 0xFF; // 255
-
     let encryptionKey = '';
     let hiddenMessage = '';
     let highestScore = 0;
@@ -73,9 +71,7 @@ function findEncyptionKey(hexString) {
     /* For each byte in all possible hex bytes, XOR against the input "hexString"'s bytes
     to produce a decrypted message */
     for (let key = 0; key <= largestHexLiteral; key++) {
-        const decryptedBytes = inputBytes.map((byte) => byte ^ key); // decrypt each byte
-        const decryptedText = Buffer.from(decryptedBytes).toString('utf8'); // turn each byte into utf8 (text)
-        const score = scoreBytes(decryptedBytes);
+        const { score, decryptedText } = decryptHexLineWithKey(hexString, key);
 
         if (score > highestScore) {
             highestScore = score;
@@ -89,6 +85,18 @@ function findEncyptionKey(hexString) {
         score: highestScore,
         text: hiddenMessage
     };
+}
+
+function decryptHexLineWithKey(hexString, key) {
+    const decryptedBytes = Buffer.from(hexString, 'hex').map((byte) => byte ^ key); // decrypt each byte
+    const decryptedText = Buffer.from(decryptedBytes).toString('utf8'); // turn each byte into utf8 (text)
+    const score = scoreBytes(decryptedBytes);
+
+    return {
+        score,
+        key,
+        decryptedText,
+    }
 }
 
 /**
@@ -134,12 +142,32 @@ async function findEncyptionKeyInFile(fileName) {
     return foundKey;
 };
 
+function findTextFromFileWithKey(fileName, key) {
+    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8');
+    const lines = file.split('\n');
+
+    let foundText = '';
+    let highestScore = 0;
+
+    for (const line of lines) {
+        const { score, decryptedText } = decryptHexLineWithKey(line, key);
+
+        if (score > highestScore) {
+            highestScore = score;
+            foundText = decryptedText;
+        }
+    }
+
+    return foundText;
+}
+
 module.exports = {
     hexToBase64,
     xorHexStrings,
     findEncyptionKey,
     xorDecrypt,
-    findEncyptionKeyInFile
+    findEncyptionKeyInFile,
+    findTextFromFileWithKey,
 };
 
 // 1111
