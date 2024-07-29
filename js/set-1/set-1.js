@@ -2,26 +2,27 @@ const fs = require('fs');
 const path = require('path');
 
 function hexToBase64(hexStr) {
+    // Turn string into binary from hex and then turn into base64 string
     return Buffer.from(hexStr, 'hex').toString('base64');
 }
 
 // XOR each byte to create new array of bytes
-function xor(a, b) {
-    const length = Math.max(a.length, b.length);
-    const buffer = Buffer.alloc(length);
+function xor(bufferOne, bufferTwo) {
+    const length = Math.max(bufferOne.length, bufferTwo.length);
+    const buffer = Buffer.alloc(length); // creates new buffer of size of longest input
 
     for (let i = 0; i < length; i++) {
-        buffer[i] = a[i] ^ b[i];
+        buffer[i] = bufferOne[i] ^ bufferTwo[i];
     }
 
     return buffer;
 }
 
 function xorHexStrings(source, comparator) {
-    const bufferOne = Buffer.from(source, 'hex');
-    const bufferTwo = Buffer.from(comparator, 'hex');
+    const sourceBytes = Buffer.from(source, 'hex');
+    const comparatorBytes = Buffer.from(comparator, 'hex');
 
-    return xor(bufferOne, bufferTwo).toString('hex');
+    return xor(sourceBytes, comparatorBytes).toString('hex');
 }
 
 function isAlphabetChar(byte) {
