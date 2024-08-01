@@ -27,7 +27,17 @@ func TestC2FixedXOR(t *testing.T) {
 func TestC3SingleByteXOR(t *testing.T) {
 	hexInput := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
 
-	key := FindEncyptionKey(hexInput);
+	key, _ := FindEncryptionKeyForLine(hexInput);
 
 	assert.Equal(t, 88, key)
+}
+
+func TestFindEncryptionKeyInFile(t *testing.T) {
+	fileName := "4.txt";
+
+	key := FindEncyptionKeyInFile(fileName);
+	assert.Equal(t, 53, key)
+
+	message := FindTextFromFileWithKey(fileName, 53);
+	assert.Equal(t, "Now that the party is jumping\n", message)
 }

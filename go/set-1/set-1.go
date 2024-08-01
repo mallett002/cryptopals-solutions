@@ -1,11 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
+	// "fmt"
+	// "sync"
+
+	// "io"
 	"log"
 	"math"
+	"os"
+	"path/filepath"
 	"regexp"
 )
 
@@ -44,7 +50,24 @@ func XORHexStrings(source string, comparator string) string {
 	return hex.EncodeToString(xordBytes)
 }
 
-func FindEncyptionKey(hexInput string) int {
+func getTextWithKey(hexInput string, key int) string {
+	inputBytes, err := hex.DecodeString(hexInput)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var decryptedBytes []byte = make([]byte, 0, len(inputBytes))
+
+	for _, inputByte := range inputBytes {
+		decrypted := inputByte ^ byte(key)
+		decryptedBytes = append(decryptedBytes, byte(decrypted))
+	}
+
+	return string(decryptedBytes)
+}
+
+func FindEncryptionKeyForLine(hexInput string) (int, float32) {
 	inputBytes, err := hex.DecodeString(hexInput)
 	const largestHex = 0xFF
 
@@ -56,6 +79,7 @@ func FindEncyptionKey(hexInput string) int {
 	var foundEncryptionKey = 0
 
 	for key := 0; key < largestHex; key++ {
+		// Todo: extract this out
 		var decryptedBytes []byte = make([]byte, 0, len(inputBytes))
 
 		for _, inputByte := range inputBytes {
@@ -66,13 +90,13 @@ func FindEncyptionKey(hexInput string) int {
 		text := string(decryptedBytes)
 		score := scoreEnglishText(text)
 
-		if (score > topScore) {
+		if score > topScore {
 			topScore = score
 			foundEncryptionKey = key
 		}
 	}
 
-	return foundEncryptionKey
+	return foundEncryptionKey, topScore
 }
 
 func isPrintableAsci(text string) bool {
@@ -113,4 +137,67 @@ func scoreEnglishText(text string) float32 {
 	}
 
 	return 0
+}
+
+func FindEncyptionKeyInFile(fileName string) int {
+	file, err := os.Open(filepath.Join("..", "data", fileName))
+
+	if err != nil {
+		log.Fatalf("unable to read file: %v", err)
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	topScore := float32(0)
+	bestKey := 0
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		key, score := FindEncryptionKeyForLine(line)
+
+		if score > topScore {
+			topScore = score
+			bestKey = key
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Println("Error reading file:", err)
+	}
+
+	return bestKey
+}
+
+func FindTextFromFileWithKey(fileName string, key int) string {
+	file, err := os.Open(filepath.Join("..", "data", fileName))
+
+	if err != nil {
+		log.Fatalf("unable to read file: %v", err)
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	topScore := float32(0)
+	bestText := ""
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		text := getTextWithKey(line, key)
+
+		score := scoreEnglishText(text)
+		if score > topScore {
+			topScore = score
+			bestText = text
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Println("Error reading file:", err)
+	}
+
+	return bestText
 }
