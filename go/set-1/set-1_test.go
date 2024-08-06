@@ -27,7 +27,7 @@ func TestC2FixedXOR(t *testing.T) {
 func TestC3SingleByteXOR(t *testing.T) {
 	hexInput := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
 
-	key, _ := FindEncryptionKeyForLine(hexInput);
+	key, _ := GetKeyAndScoreForLine(hexInput);
 
 	assert.Equal(t, 88, key)
 }

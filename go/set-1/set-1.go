@@ -12,7 +12,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"regexp"
+	// "regexp"
 )
 
 func HexToBase64(input string) string {
@@ -50,7 +50,7 @@ func XORHexStrings(source string, comparator string) string {
 	return hex.EncodeToString(xordBytes)
 }
 
-func getTextWithKey(hexInput string, key int) string {
+func getDecryptedBytes(hexInput string, key int) []byte {
 	inputBytes, err := hex.DecodeString(hexInput)
 
 	if err != nil {
@@ -64,31 +64,19 @@ func getTextWithKey(hexInput string, key int) string {
 		decryptedBytes = append(decryptedBytes, byte(decrypted))
 	}
 
-	return string(decryptedBytes)
+	return decryptedBytes
 }
 
-func FindEncryptionKeyForLine(hexInput string) (int, float32) {
-	inputBytes, err := hex.DecodeString(hexInput)
+func GetKeyAndScoreForLine(hexInput string) (int, int) {
 	const largestHex = 0xFF
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var topScore float32 = 0
+	var topScore int = 0
 	var foundEncryptionKey = 0
 
 	for key := 0; key < largestHex; key++ {
-		// Todo: extract this out
-		var decryptedBytes []byte = make([]byte, 0, len(inputBytes))
+		var decryptedBytes []byte = getDecryptedBytes(hexInput, key)
 
-		for _, inputByte := range inputBytes {
-			decrypted := inputByte ^ byte(key)
-			decryptedBytes = append(decryptedBytes, byte(decrypted))
-		}
-
-		text := string(decryptedBytes)
-		score := scoreEnglishText(text)
+		score := scoreBytes(decryptedBytes)
 
 		if score > topScore {
 			topScore = score
@@ -99,44 +87,37 @@ func FindEncryptionKeyForLine(hexInput string) (int, float32) {
 	return foundEncryptionKey, topScore
 }
 
-func isPrintableAsci(text string) bool {
-	re := regexp.MustCompile(`^[\x20-\x7E]*$`)
-
-	return re.MatchString(text)
+func isAlphabetChar(bite byte) bool {
+	return (bite >= 64 && bite <= 90) || (bite >= 97 && bite <= 122) || bite == 92
 }
 
-func scoreEnglishText(text string) float32 {
-	if !isPrintableAsci(text) {
-		return 0
-	}
+func isSpaceChar(bite byte) bool {
+	return bite == 32
+}
 
-	var wordFrequencies map[rune]float32 = map[rune]float32{
-		'e': 12.7, 't': 9.06, 'a': 8.17, 'o': 7.51, 'i': 6.97, 'n': 6.75,
-		's': 6.33, 'h': 6.09, 'r': 5.99, 'd': 4.25, 'l': 4.02, 'c': 2.78,
-		'u': 2.76, 'm': 2.41, 'w': 2.36, 'f': 2.23, 'g': 2.02, 'y': 1.97,
-		'p': 1.93, 'b': 1.49, 'v': 0.98, 'k': 0.77, 'j': 0.15, 'x': 0.15,
-		'q': 0.095, 'z': 0.074, ' ': 13,
-	}
+func isSpecialChar(bite byte) bool {
+	return (bite >= 33 && bite <= 64) || (bite >= 93 && bite <= 96) || (bite >= 123 && bite <= 127) || bite == 91
+}
 
-	var score float32 = 0
-	validCharCount := 0
+func scoreBytes(buffer []byte) int {
+	score := 0
 
-	for _, char := range text {
-		var val, ok = wordFrequencies[char]
+	for _, bite := range buffer {
+		bitten := byte(bite)
 
-		if ok {
-			score += val
-			validCharCount++
+		switch {
+		case isAlphabetChar(bitten):
+			score += 20
+		case isSpaceChar(bitten):
+			score += 100
+		case isSpecialChar(bitten):
+			score += 10
+		default:
+			score -= 100
 		}
 	}
 
-	if validCharCount > 0 {
-		result := score / float32(validCharCount)
-
-		return result
-	}
-
-	return 0
+	return score
 }
 
 func FindEncyptionKeyInFile(fileName string) int {
@@ -150,12 +131,12 @@ func FindEncyptionKeyInFile(fileName string) int {
 
 	scanner := bufio.NewScanner(file)
 
-	topScore := float32(0)
+	topScore := 0
 	bestKey := 0
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		key, score := FindEncryptionKeyForLine(line)
+		key, score := GetKeyAndScoreForLine(line)
 
 		if score > topScore {
 			topScore = score
@@ -181,14 +162,15 @@ func FindTextFromFileWithKey(fileName string, key int) string {
 
 	scanner := bufio.NewScanner(file)
 
-	topScore := float32(0)
+	topScore := 0
 	bestText := ""
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		text := getTextWithKey(line, key)
+		decryptedBytes := getDecryptedBytes(line, key)
+		text := string(decryptedBytes)
 
-		score := scoreEnglishText(text)
+		score := scoreBytes(decryptedBytes)
 		if score > topScore {
 			topScore = score
 			bestText = text
