@@ -5,6 +5,7 @@ const {
     findEncyptionKey,
     xorDecrypt,
     findTextFromFileWithKey,
+    repeatingKeyXOR,
 } = require("./set-1");
 
 describe('set-1' , () => {
@@ -32,7 +33,7 @@ describe('set-1' , () => {
         expect(xorDecrypt(hexInput, key)).toStrictEqual("Cooking MC's like a pound of bacon");
     });
 
-    test('C3: Detect single-character XOR', async () => {
+    test('C4: Detect single-character XOR', async () => {
         const fileName = '4.txt';
 
         const key = await findEncyptionKeyInFile(fileName);
@@ -42,5 +43,16 @@ describe('set-1' , () => {
         const message = findTextFromFileWithKey(fileName, key);
 
         expect(message).toBe('Now that the party is jumping\n');
+    });
+
+    test('C5: Implement repeating-key XOR', async () => {
+        const plainText =  `Burning 'em, if you ain't quick and nimble
+        I go crazy when I hear a cymbal`;
+        const key = 'ICE';
+        
+        const result = repeatingKeyXOR(plainText, key);
+
+        expect(result).toStrictEqual(`0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272
+a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f`);
     });
 });

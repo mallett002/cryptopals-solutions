@@ -1,3 +1,4 @@
+const { log } = require('console');
 const fs = require('fs');
 const path = require('path');
 
@@ -177,6 +178,34 @@ function findTextFromFileWithKey(fileName, key) {
     return foundText;
 }
 
+/**
+ * Sequentially XOR each byte of the key to the plainText. *
+ * Returns the encrypted string result of the sequential XOR.
+ *
+ * @param {string} plainText - The value to encrypt
+ * @param {string} key - The value to encrypt against
+ * @returns {number} The result of XOR'ing 
+ */
+function repeatingKeyXOR(plainText, key) {
+    const plainTextBytes = Buffer.from(plainText, 'utf8');
+    const keyBytes = Buffer.from(key, 'utf8');
+    const buffer = Buffer.alloc(plainText.length);
+
+    // index:    0, 1, 2, 3, 4, 5, 6, 7, 8
+    // keyIndex: 0, 1, 2, 0, 1, 2, 0, 1, 2
+
+    // marker 1
+    for (let i = 0; i < plainTextBytes.length; i++) {
+        const keyIndex = i % key.length;
+
+       // xor them 
+        buffer[i] = plainTextBytes[i] ^ keyBytes[keyIndex];
+    }
+
+    return Buffer.from(buffer).toString('hex');
+}
+
+
 module.exports = {
     hexToBase64,
     xorHexStrings,
@@ -184,6 +213,7 @@ module.exports = {
     xorDecrypt,
     findEncyptionKeyInFile,
     findTextFromFileWithKey,
+    repeatingKeyXOR,
 };
 
 // 1111
