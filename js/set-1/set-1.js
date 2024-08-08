@@ -189,12 +189,11 @@ function findTextFromFileWithKey(fileName, key) {
 function repeatingKeyXOR(plainText, key) {
     const plainTextBytes = Buffer.from(plainText, 'utf8');
     const keyBytes = Buffer.from(key, 'utf8');
-    const buffer = Buffer.alloc(plainText.length);
+    const buffer = Buffer.alloc(plainTextBytes.length);
 
     // index:    0, 1, 2, 3, 4, 5, 6, 7, 8
     // keyIndex: 0, 1, 2, 0, 1, 2, 0, 1, 2
 
-    // marker 1
     for (let i = 0; i < plainTextBytes.length; i++) {
         const keyIndex = i % key.length;
 
@@ -202,7 +201,7 @@ function repeatingKeyXOR(plainText, key) {
         buffer[i] = plainTextBytes[i] ^ keyBytes[keyIndex];
     }
 
-    return Buffer.from(buffer).toString('hex');
+    return buffer.toString('hex');
 }
 
 
