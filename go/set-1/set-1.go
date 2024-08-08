@@ -184,6 +184,12 @@ func FindTextFromFileWithKey(fileName string, key int) string {
 	return bestText
 }
 
+/*
+ 	* Sequentially XOR each byte of the key to the plainText. *
+		* Ex: Text: Hello; Key: ICE
+			* H ^ I, e ^ C, l ^ E, l ^ I... etc
+ 	* Returns the encrypted string result of the sequential XOR.
+*/
 func RepeatingKeyXOR(text string, key string) string {
 	textBytes := []byte(text)
 	keyBytes := []byte(key)
