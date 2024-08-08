@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
+	// "fmt"
 	// "sync"
 
 	// "io"
@@ -185,9 +185,15 @@ func FindTextFromFileWithKey(fileName string, key int) string {
 }
 
 func RepeatingKeyXOR(text string, key string) string {
-	fmt.Println(text)
-	fmt.Println(key)
+	textBytes := []byte(text)
+	keyBytes := []byte(key)
 
-	return `0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272
-a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f`
+	encryptedBytes := make([]byte, 0, len(textBytes))
+
+	for i, bite := range textBytes {
+		keyIndex := i % len(keyBytes)
+		encryptedBytes = append(encryptedBytes, bite ^ keyBytes[keyIndex])
+	}
+
+	return hex.EncodeToString(encryptedBytes)
 }
