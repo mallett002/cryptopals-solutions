@@ -219,8 +219,11 @@ func GetHammingDistance(a string, b string) int {
 	differingBitCount := 0
 
 	for i := 0; i < length; i++ {
-		if (aBytes[i] != bBytes[i]) {
-			differingBitCount++
+		xor := aBytes[i] ^ bBytes[i]
+
+		for xor != 0 {
+			differingBitCount += int(xor & 1)
+			xor = xor >> 1
 		}
 	}
 
