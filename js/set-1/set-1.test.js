@@ -6,9 +6,10 @@ const {
     xorDecrypt,
     findTextFromFileWithKey,
     repeatingKeyXOR,
+    getHammingDistance,
 } = require("./set-1");
 
-describe('set-1' , () => {
+describe('set-1', () => {
     test('C1: Convert hex to base64', () => {
         const result = hexToBase64('49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d');
 
@@ -27,7 +28,7 @@ describe('set-1' , () => {
     test('C3: Single-byte XOR cipher', () => {
         const hexInput = '1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736';
 
-        const {key} = findEncyptionKey(hexInput);
+        const { key } = findEncyptionKey(hexInput);
 
         expect(key).toStrictEqual(88);
         expect(xorDecrypt(hexInput, key)).toStrictEqual("Cooking MC's like a pound of bacon");
@@ -54,4 +55,13 @@ describe('set-1' , () => {
 
         expect(result).toStrictEqual(expected);
     });
+
+    test('C6: Break repeating-key XOR', () => {
+        /* 1. Find the key
+            - KEYSIZE: guessed length of the key
+            - write function to compute Hamming distance btw 2 strings (number of differing bits) 
+       */
+        // Hamming distance
+        expect(getHammingDistance('this is a test', 'wokka wokka!!!'), 37);
+    })
 });

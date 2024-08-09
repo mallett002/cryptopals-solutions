@@ -204,6 +204,21 @@ function repeatingKeyXOR(plainText, key) {
     return buffer.toString('hex');
 }
 
+function getHammingDistance(a, b) {
+    const aBytes = Buffer.from(a, 'utf8');
+    const bBytes = Buffer.from(b, 'utf8');
+    const length = Math.max(aBytes.length, bBytes.length);
+
+    let differingBitCount = 0;
+
+    for (let i = 0; i < length; i++) {
+        if (aBytes[i] !== bBytes[i]) {
+            differingBitCount++;
+        } 
+    }
+
+    return differingBitCount;
+}
 
 module.exports = {
     hexToBase64,
@@ -213,6 +228,7 @@ module.exports = {
     findEncyptionKeyInFile,
     findTextFromFileWithKey,
     repeatingKeyXOR,
+    getHammingDistance
 };
 
 // 1111
