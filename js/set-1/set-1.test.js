@@ -62,6 +62,8 @@ describe('set-1', () => {
             - write function to compute Hamming distance btw 2 strings (number of differing bits) 
        */
         // Hamming distance
-        expect(getHammingDistance('this is a test', 'wokka wokka!!!'), 37);
+        const distance = getHammingDistance('this is a test', 'wokka wokka!!!')
+
+        expect(distance).toBe(37);
     })
 });

@@ -52,3 +52,12 @@ func TestRepeatingKeyXOR(t *testing.T) {
  
 	assert.Equal(t, expectedEncryptedText, encryptedText)
 }
+
+func TestBreakRepeatingKeyXOR(t *testing.T) {
+	/* 1. Find the key
+	    - KEYSIZE: guessed length of the key
+	    - write function to compute Hamming distance btw 2 strings (number of differing bits) 
+       */
+	// Hamming distance
+	assert.Equal(t, 37, GetHammingDistance("this is a test", "wokka wokka!!!"))
+}

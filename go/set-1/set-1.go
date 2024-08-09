@@ -203,3 +203,26 @@ func RepeatingKeyXOR(text string, key string) string {
 
 	return hex.EncodeToString(encryptedBytes)
 }
+
+func max(a, b int) int {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+func GetHammingDistance(a string, b string) int {
+	aBytes := []byte(a)
+	bBytes := []byte(b)
+	length := max(len(aBytes), len(bBytes))
+
+	differingBitCount := 0
+
+	for i := 0; i < length; i++ {
+		if (aBytes[i] != bBytes[i]) {
+			differingBitCount++
+		}
+	}
+
+	return differingBitCount
+}

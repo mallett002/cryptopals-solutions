@@ -212,9 +212,30 @@ function getHammingDistance(a, b) {
     let differingBitCount = 0;
 
     for (let i = 0; i < length; i++) {
-        if (aBytes[i] !== bBytes[i]) {
-            differingBitCount++;
-        } 
+        // how this works. take these 2 nibbles:
+        // 1:   0101 
+        // 2:   1101
+        // xor: 1000
+
+        // xor & 1: compares each rightmost digit with 1. If 1 if both are 1
+
+        // 1000 >>= 1 shifts bits 1 to the right:
+        // ex:
+        //   0100 
+        //   0010
+        //   0001
+        //   0000
+
+        // look at each byte:
+        const byteA = aBytes[i] || 0;
+        const byteB = bBytes[i] || 0;
+
+        let xor = byteA ^ byteB; // get the diff (xor)
+
+        while (xor !== 0) { // all shifted to the right (0000)
+            differingBitCount += xor & 1; // is the right most digit a 1
+            xor >>= 1; // shift 1 to the right to look at next bits
+        }
     }
 
     return differingBitCount;
