@@ -251,15 +251,42 @@ function breakRepeatingKeyXOR(fileName) {
     for (let keySize = 2; keySize <= 40; keySize++) {
         const chunkOne = cypherData.subarray(0, keySize);
         const chunkTwo = cypherData.subarray(keySize, keySize * 2);
-        const hammingDistance = getHammingDistance(chunkOne, chunkTwo);
-        const normalizedDistance = hammingDistance / keySize;
+        const chunkThree = cypherData.subarray(keySize * 2, keySize * 3);
+        const chunkFour = cypherData.subarray(keySize * 3, keySize * 4);
+        const chunks = [chunkOne, chunkTwo, chunkThree, chunkFour];
+        const averages = [];
 
-        if (normalizedDistance < smallestNormalizedDistance) {
-            keySizeWithSmallestHammingDistance = keySize;
-            smallestNormalizedDistance = normalizedDistance;
+        // Don't compare chunks already visited: think can do just j = i + 1
+        for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i];
+
+            // think can do just j = i + 1 here to start:
+            for (let j = 0; j < chunks.length; j++) {
+                if (i === j) {
+                    continue;
+                }
+
+                const otherChunk = chunks[j];
+
+                const hammingDistance = getHammingDistance(chunk, otherChunk);
+                const normalizedDistance = hammingDistance / keySize;
+
+                averages.push(normalizedDistance);
+            }
         }
 
-        console.log(`keySize ${keySize} has normalizedDistance ${normalizedDistance}`);
+        const average = averages.reduce((sum, curr) => sum += curr) / averages.length;
+
+
+        // const hammingDistance = getHammingDistance(chunkOne, chunkTwo);
+        // const normalizedDistance = hammingDistance / keySize;
+
+        if (average < smallestNormalizedDistance) {
+            keySizeWithSmallestHammingDistance = keySize;
+            smallestNormalizedDistance = average;
+        }
+
+        console.log(`keySize ${keySize} has normalizedDistance ${smallestNormalizedDistance}`);
     }
 
     console.log({keySizeWithSmallestHammingDistance, smallestNormalizedDistance});
