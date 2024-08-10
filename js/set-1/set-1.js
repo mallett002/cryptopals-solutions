@@ -238,10 +238,7 @@ function getHammingDistance(aBytes, bBytes) {
     return differingBitCount;
 }
 
-function breakRepeatingKeyXOR(fileName) {
-    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf8'); // read file in as a string
-    const cypherData = Buffer.from(file, 'base64');
-
+function findProbableKeySize(cypherData) {
     let keySizeWithSmallestHammingDistance = 2;
     let smallestNormalizedDistance = Infinity;
 
@@ -281,10 +278,19 @@ function breakRepeatingKeyXOR(fileName) {
             smallestNormalizedDistance = average;
         }
 
-        console.log(`keySize ${keySize} has normalizedDistance ${smallestNormalizedDistance}`);
     }
 
-    console.log({keySizeWithSmallestHammingDistance, smallestNormalizedDistance});
+    return keySizeWithSmallestHammingDistance;
+}
+
+function breakRepeatingKeyXOR(fileName) {
+    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf8'); // read file in as a string
+    const cypherData = Buffer.from(file, 'base64');
+    const keySize = findProbableKeySize(cypherData);
+    
+    console.log(`keySize: ${keySize}`);
+    
+
 }
 
 module.exports = {
