@@ -204,8 +204,6 @@ function repeatingKeyXOR(plainText, key) {
 }
 
 function getHammingDistance(aBytes, bBytes) {
-    // const aBytes = Buffer.from(a, 'utf8');
-    // const bBytes = Buffer.from(b, 'utf8');
     const length = Math.max(aBytes.length, bBytes.length);
 
     let differingBitCount = 0;
@@ -246,23 +244,24 @@ function breakRepeatingKeyXOR(fileName) {
 
     let keySizeWithSmallestHammingDistance = 2;
     let smallestNormalizedDistance = Infinity;
-    // probable keysize = 5
 
+    // create 4 chunks of size key and get hemming distance against each other
+    // keySize that has the shortest average hemming distance is the found keySize
     for (let keySize = 2; keySize <= 40; keySize++) {
-        const chunkOne = cypherData.subarray(0, keySize);
-        const chunkTwo = cypherData.subarray(keySize, keySize * 2);
-        const chunkThree = cypherData.subarray(keySize * 2, keySize * 3);
-        const chunkFour = cypherData.subarray(keySize * 3, keySize * 4);
-        const chunks = [chunkOne, chunkTwo, chunkThree, chunkFour];
-        const averages = [];
+        const chunks = [
+            cypherData.subarray(0, keySize),
+            cypherData.subarray(keySize, keySize * 2),
+            cypherData.subarray(keySize * 2, keySize * 3),
+            cypherData.subarray(keySize * 3, keySize * 4),
+        ];
+        const averagesForKey = [];
 
-        // Don't compare chunks already visited: think can do just j = i + 1
         for (let i = 0; i < chunks.length; i++) {
             const chunk = chunks[i];
 
-            // think can do just j = i + 1 here to start:
+            // look at other chunks and get hamming distance of them
             for (let j = 0; j < chunks.length; j++) {
-                if (i === j) {
+                if (j === i) {
                     continue;
                 }
 
@@ -271,15 +270,11 @@ function breakRepeatingKeyXOR(fileName) {
                 const hammingDistance = getHammingDistance(chunk, otherChunk);
                 const normalizedDistance = hammingDistance / keySize;
 
-                averages.push(normalizedDistance);
+                averagesForKey.push(normalizedDistance);
             }
         }
 
-        const average = averages.reduce((sum, curr) => sum += curr) / averages.length;
-
-
-        // const hammingDistance = getHammingDistance(chunkOne, chunkTwo);
-        // const normalizedDistance = hammingDistance / keySize;
+        const average = averagesForKey.reduce((sum, curr) => sum + curr, 0) / averagesForKey.length;
 
         if (average < smallestNormalizedDistance) {
             keySizeWithSmallestHammingDistance = keySize;
