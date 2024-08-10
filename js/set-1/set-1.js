@@ -1,4 +1,3 @@
-const { log } = require('console');
 const fs = require('fs');
 const path = require('path');
 
@@ -204,9 +203,9 @@ function repeatingKeyXOR(plainText, key) {
     return buffer.toString('hex');
 }
 
-function getHammingDistance(a, b) {
-    const aBytes = Buffer.from(a, 'utf8');
-    const bBytes = Buffer.from(b, 'utf8');
+function getHammingDistance(aBytes, bBytes) {
+    // const aBytes = Buffer.from(a, 'utf8');
+    // const bBytes = Buffer.from(b, 'utf8');
     const length = Math.max(aBytes.length, bBytes.length);
 
     let differingBitCount = 0;
@@ -241,6 +240,31 @@ function getHammingDistance(a, b) {
     return differingBitCount;
 }
 
+function breakRepeatingKeyXOR(fileName) {
+    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf8'); // read file in as a string
+    const cypherData = Buffer.from(file, 'base64');
+
+    let keySizeWithSmallestHammingDistance = 2;
+    let smallestNormalizedDistance = Infinity;
+    // probable keysize = 5
+
+    for (let keySize = 2; keySize <= 40; keySize++) {
+        const chunkOne = cypherData.subarray(0, keySize);
+        const chunkTwo = cypherData.subarray(keySize, keySize * 2);
+        const hammingDistance = getHammingDistance(chunkOne, chunkTwo);
+        const normalizedDistance = hammingDistance / keySize;
+
+        if (normalizedDistance < smallestNormalizedDistance) {
+            keySizeWithSmallestHammingDistance = keySize;
+            smallestNormalizedDistance = normalizedDistance;
+        }
+
+        console.log(`keySize ${keySize} has normalizedDistance ${normalizedDistance}`);
+    }
+
+    console.log({keySizeWithSmallestHammingDistance, smallestNormalizedDistance});
+}
+
 module.exports = {
     hexToBase64,
     xorHexStrings,
@@ -249,7 +273,8 @@ module.exports = {
     findEncyptionKeyInFile,
     findTextFromFileWithKey,
     repeatingKeyXOR,
-    getHammingDistance
+    getHammingDistance,
+    breakRepeatingKeyXOR,
 };
 
 // 1111

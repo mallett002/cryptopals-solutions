@@ -7,6 +7,7 @@ const {
     findTextFromFileWithKey,
     repeatingKeyXOR,
     getHammingDistance,
+    breakRepeatingKeyXOR,
 } = require("./set-1");
 
 describe('set-1', () => {
@@ -62,8 +63,13 @@ describe('set-1', () => {
             - write function to compute Hamming distance btw 2 strings (number of differing bits) 
        */
         // Hamming distance
-        const distance = getHammingDistance('this is a test', 'wokka wokka!!!')
+        const bufferOne = Buffer.from('this is a test', 'utf8');
+        const bufferTwo = Buffer.from('wokka wokka!!!', 'utf8');
+
+        const distance = getHammingDistance(bufferOne, bufferTwo);
 
         expect(distance).toBe(37);
-    })
+
+        const result = breakRepeatingKeyXOR('6.txt');
+    });
 });
