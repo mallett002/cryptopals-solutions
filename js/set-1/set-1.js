@@ -62,7 +62,7 @@ function scoreBytes(buffer) {
  * @param {string} hexString - The hexadecimal string to analyze.
  * @returns {number} The encryption key used as a decimal value.
  */
-function findEncyptionKey(hexString) {
+function findEncryptionKey(hexString) {
     const largestHexLiteral = 0xFF; // 255
     let encryptionKey = '';
     let hiddenMessage = '';
@@ -143,7 +143,7 @@ async function findEncyptionKeyInFile(fileName) {
     let englishText = '';
 
     for (const line of lines) {
-        const { key, score, text } = findEncyptionKey(line);
+        const { key, score, text } = findEncryptionKey(line);
 
         if (score > highestScore) {
             highestScore = score;
@@ -324,14 +324,15 @@ function breakRepeatingKeyXOR(fileName) {
     // Transposed: A block that is first byte of every block, another that is second byte of every block and so on:
     const transposedBlocks = _transposeBlocks(cypherTextInKeySizeChunks, keySize);
     
-    console.log('transposedBlocks: ', transposedBlocks);
-    
+    for (const block of transposedBlocks) {
+        // Needs to do what findEncryptionKey does
+    }
 }
 
 module.exports = {
     hexToBase64,
     xorHexStrings,
-    findEncyptionKey,
+    findEncryptionKey,
     xorDecrypt,
     findEncyptionKeyInFile,
     findTextFromFileWithKey,

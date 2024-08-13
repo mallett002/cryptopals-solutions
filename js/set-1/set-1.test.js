@@ -2,7 +2,7 @@ const {
     findEncyptionKeyInFile,
     hexToBase64,
     xorHexStrings,
-    findEncyptionKey,
+    findEncryptionKey,
     xorDecrypt,
     findTextFromFileWithKey,
     repeatingKeyXOR,
@@ -29,7 +29,7 @@ describe('set-1', () => {
     test('C3: Single-byte XOR cipher', () => {
         const hexInput = '1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736';
 
-        const { key } = findEncyptionKey(hexInput);
+        const { key } = findEncryptionKey(hexInput);
 
         expect(key).toStrictEqual(88);
         expect(xorDecrypt(hexInput, key)).toStrictEqual("Cooking MC's like a pound of bacon");
