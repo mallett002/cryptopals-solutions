@@ -71,7 +71,7 @@ function findEncyptionKey(hexString) {
     /* For each byte in all possible hex bytes, XOR against the input "hexString"'s bytes
     to produce a decrypted message */
     for (let key = 0; key <= largestHexLiteral; key++) {
-        const { score, decryptedText } = decryptHexLineWithKey(hexString, key);
+        const { score, decryptedText } = _decryptHexLineWithKey(hexString, key);
 
         if (score > highestScore) {
             highestScore = score;
@@ -87,7 +87,14 @@ function findEncyptionKey(hexString) {
     };
 }
 
-function decryptHexLineWithKey(hexString, key) {
+/**
+ * Single Byte XOR - Decrypts each byte of hexString with the given key and scores the decrypted text against English text
+ *
+ * @param {string} hexString - The hexadecimal string to analyze.
+ * @param {number} key - The key to decrypt each byte of hexString against
+ * @returns {{score: number, key: number, decryptedText: string}} An object containing the score, key, and decrypted text.
+ */
+function _decryptHexLineWithKey(hexString, key) {
     const decryptedBytes = Buffer.from(hexString, 'hex').map((byte) => byte ^ key); // decrypt each byte
     const decryptedText = Buffer.from(decryptedBytes).toString('utf8'); // turn each byte into utf8 (text)
     const score = scoreBytes(decryptedBytes);
@@ -166,7 +173,7 @@ function findTextFromFileWithKey(fileName, key) {
     let highestScore = 0;
 
     for (const line of lines) {
-        const { score, decryptedText } = decryptHexLineWithKey(line, key);
+        const { score, decryptedText } = _decryptHexLineWithKey(line, key);
 
         if (score > highestScore) {
             highestScore = score;
@@ -238,7 +245,7 @@ function getHammingDistance(aBytes, bBytes) {
     return differingBitCount;
 }
 
-function findProbableKeySize(cypherData) {
+function _findProbableKeySize(cypherData) {
     let keySizeWithSmallestHammingDistance = 2;
     let smallestNormalizedDistance = Infinity;
 
@@ -283,14 +290,42 @@ function findProbableKeySize(cypherData) {
     return keySizeWithSmallestHammingDistance;
 }
 
+// Make a block that is the first byte of every block, and a block that is the second byte of every block, and so on.
+function _transposeBlocks(chunks, keySize) {
+    const transposedBlocks = [];
+
+    for (let keyIndex = 0; keyIndex < keySize; keyIndex++) {
+        const newChunk = [];
+
+        for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+            if (chunks[chunkIndex][keyIndex]) {
+                newChunk.push(chunks[chunkIndex][keyIndex]);
+                // _decryptHexLineWithKey()
+            }
+        }
+
+        transposedBlocks.push(newChunk);
+    }
+
+    return transposedBlocks;
+}
+
 function breakRepeatingKeyXOR(fileName) {
     const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf8'); // read file in as a string
     const cypherData = Buffer.from(file, 'base64');
-    const keySize = findProbableKeySize(cypherData);
+    const keySize = _findProbableKeySize(cypherData);
     
-    console.log(`keySize: ${keySize}`);
-    
+    const cypherTextInKeySizeChunks = [];
 
+    for (let i = 0; i < cypherData.length; i += keySize) {
+        cypherTextInKeySizeChunks.push(cypherData.subarray(i, i + keySize));
+    }
+
+    // Transposed: A block that is first byte of every block, another that is second byte of every block and so on:
+    const transposedBlocks = _transposeBlocks(cypherTextInKeySizeChunks, keySize);
+    
+    console.log('transposedBlocks: ', transposedBlocks);
+    
 }
 
 module.exports = {
