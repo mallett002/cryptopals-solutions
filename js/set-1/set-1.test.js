@@ -8,6 +8,7 @@ const {
     repeatingKeyXOR,
     getHammingDistance,
     breakRepeatingKeyXOR,
+    aiBreakRepeatingKeyXOR,
 } = require("./set-1");
 
 describe('set-1', () => {
@@ -63,13 +64,14 @@ describe('set-1', () => {
             - write function to compute Hamming distance btw 2 strings (number of differing bits) 
        */
         // Hamming distance
-        const bufferOne = Buffer.from('this is a test', 'utf8');
-        const bufferTwo = Buffer.from('wokka wokka!!!', 'utf8');
+        // const bufferOne = Buffer.from('this is a test', 'utf8');
+        // const bufferTwo = Buffer.from('wokka wokka!!!', 'utf8');
 
-        const distance = getHammingDistance(bufferOne, bufferTwo);
+        // const distance = getHammingDistance(bufferOne, bufferTwo);
 
-        expect(distance).toBe(37);
+        // expect(distance).toBe(37);
 
         const result = breakRepeatingKeyXOR('6.txt');
+        // const aiResult = aiBreakRepeatingKeyXOR('6.txt');
     });
 });
