@@ -290,22 +290,30 @@ function _findProbableKeySize(cypherData) {
 }
 
 // Make a block that is the first byte of every block, and a block that is the second byte of every block, and so on.
-function _transposeBlocks(chunks, keySize) {
-    const transposedBlocks = [];
+function _transposeBlocks(data, keySize) {
+    // const transposedBlocks = [];
 
-    for (let keyIndex = 0; keyIndex < keySize; keyIndex++) {
-        const newChunk = [];
+    // for (let keyIndex = 0; keyIndex < keySize; keyIndex++) {
+    //     const newChunk = [];
 
-        for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-            if (chunks[chunkIndex][keyIndex]) {
-                newChunk.push(chunks[chunkIndex][keyIndex]);
-            }
-        }
+    //     for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+    //         if (chunks[chunkIndex][keyIndex]) {
+    //             newChunk.push(chunks[chunkIndex][keyIndex]);
+    //         }
+    //     }
 
-        transposedBlocks.push(newChunk);
+    //     transposedBlocks.push(newChunk);
+    // }
+
+    // return transposedBlocks.map(block => Buffer.from(block));
+
+    const blocks = Array.from({ length: keySize }, () => []);
+
+    for (let i = 0; i < data.length; i++) {
+        blocks[i % keySize].push(data[i]);
     }
 
-    return transposedBlocks.map(block => Buffer.from(block));
+    return blocks.map(block => Buffer.from(block));
 }
 
 function breakRepeatingKeyXOR(fileName) {
@@ -313,21 +321,13 @@ function breakRepeatingKeyXOR(fileName) {
     const cypherData = Buffer.from(file, 'base64');
     const keySize = _findProbableKeySize(cypherData);
     
-    const cypherTextInKeySizeChunks = [];
-
-    for (let i = 0; i < cypherData.length; i += keySize) {
-        cypherTextInKeySizeChunks.push(cypherData.subarray(i, i + keySize));
-    }
-
     // Transposed: A block that is first byte of every block, another that is second byte of every block and so on:
-    const transposedBlocks = _transposeBlocks(cypherTextInKeySizeChunks, keySize);
+    const transposedBlocks = _transposeBlocks(cypherData, keySize);
 
     let key = '';
 
     for (const block of transposedBlocks) {
         const hexBlock = block.toString('hex');
-        console.log('hexBlock: ', hexBlock);
-        
         const { key: singleByteKey } = findEncryptionKey(hexBlock);
         
         key += String.fromCharCode(singleByteKey);
