@@ -322,12 +322,30 @@ function _determineKey(transposedBlocks) {
     return key;
 }
 
+// Finds the key used to encrypt the file
 function breakRepeatingKeyXOR(fileName) {
     const cypherData = _readAndDecodeFile(fileName);
     const keySize = _findProbableKeySize(cypherData);
     const transposedBlocks = _transposeKeySizedBlocks(cypherData, keySize);
 
     return _determineKey(transposedBlocks);
+}
+
+function repeatingKeyXORForFile(fileName, key) {
+    const cypherData = _readAndDecodeFile(fileName);
+
+    // This is doing what repeatingKeyXOR is doing:
+    const keyBytes = Buffer.from(key, 'utf8');
+    const buffer = Buffer.alloc(cypherData.length);
+
+    for (let i = 0; i < cypherData.length; i++) {
+        const keyIndex = i % key.length;
+
+       // xor them 
+        buffer[i] = cypherData[i] ^ keyBytes[keyIndex];
+    }
+
+    return buffer.toString('utf8');
 }
 
 module.exports = {
@@ -340,6 +358,7 @@ module.exports = {
     repeatingKeyXOR,
     getHammingDistance,
     breakRepeatingKeyXOR,
+    repeatingKeyXORForFile,
 };
 
 // 1111

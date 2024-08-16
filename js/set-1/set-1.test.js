@@ -8,6 +8,7 @@ const {
     repeatingKeyXOR,
     getHammingDistance,
     breakRepeatingKeyXOR,
+    repeatingKeyXORForFile,
 } = require("./set-1");
 
 describe('set-1', () => {
@@ -69,7 +70,12 @@ describe('set-1', () => {
         expect(distance).toBe(37);
 
         // break xor:
-        const result = breakRepeatingKeyXOR('6.txt');
-        expect(result).toBe('Terminator X: Bring the noise');
+        const key = breakRepeatingKeyXOR('6.txt');
+        expect(key).toBe('Terminator X: Bring the noise');
+
+        // decrypt the file:
+        const result = repeatingKeyXORForFile('6.txt', key);
+        console.log('result: ', result);
+        
     });
 });
