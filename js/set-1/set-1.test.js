@@ -8,6 +8,7 @@ const {
     repeatingKeyXOR,
     getHammingDistance,
     breakRepeatingKeyXOR,
+    repeatingKeyXORForFile,
 } = require("./set-1");
 
 describe('set-1', () => {
@@ -65,11 +66,16 @@ describe('set-1', () => {
         // Hamming distance
         const bufferOne = Buffer.from('this is a test', 'utf8');
         const bufferTwo = Buffer.from('wokka wokka!!!', 'utf8');
-
         const distance = getHammingDistance(bufferOne, bufferTwo);
-
         expect(distance).toBe(37);
 
-        const result = breakRepeatingKeyXOR('6.txt');
+        // break xor:
+        const key = breakRepeatingKeyXOR('6.txt');
+        expect(key).toBe('Terminator X: Bring the noise');
+
+        // decrypt the file:
+        const result = repeatingKeyXORForFile('6.txt', key);
+        console.log('result: ', result);
+        
     });
 });

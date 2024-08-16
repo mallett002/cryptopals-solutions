@@ -134,7 +134,6 @@ function xorDecrypt(hexString, key) {
  * @returns {number} The byte that was used to encrypt (XORing) in decimal.
  */
 async function findEncyptionKeyInFile(fileName) {
-    // read from the file
     const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8');
     const lines = file.split('\n');
 
@@ -245,6 +244,8 @@ function getHammingDistance(aBytes, bBytes) {
     return differingBitCount;
 }
 
+// Takes in binary data and split it into incremental chunks.
+// Finds the chunk size with the lowest average hamming distance (most similar bits)
 function _findProbableKeySize(cypherData) {
     let keySizeWithSmallestHammingDistance = 2;
     let smallestNormalizedDistance = Infinity;
@@ -290,43 +291,61 @@ function _findProbableKeySize(cypherData) {
     return keySizeWithSmallestHammingDistance;
 }
 
-// Make a block that is the first byte of every block, and a block that is the second byte of every block, and so on.
-function _transposeBlocks(chunks, keySize) {
-    const transposedBlocks = [];
+function _readAndDecodeFile(fileName) {
+    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8');
 
-    for (let keyIndex = 0; keyIndex < keySize; keyIndex++) {
-        const newChunk = [];
-
-        for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-            if (chunks[chunkIndex][keyIndex]) {
-                newChunk.push(chunks[chunkIndex][keyIndex]);
-                // _decryptHexLineWithKey()
-            }
-        }
-
-        transposedBlocks.push(newChunk);
-    }
-
-    return transposedBlocks;
+    return Buffer.from(file, 'base64');
 }
 
-function breakRepeatingKeyXOR(fileName) {
-    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf8'); // read file in as a string
-    const cypherData = Buffer.from(file, 'base64');
-    const keySize = _findProbableKeySize(cypherData);
-    
-    const cypherTextInKeySizeChunks = [];
+// Make a block, of size keysize, that is the first byte of every block, and a block that is the second byte of every block, and so on.
+function _transposeKeySizedBlocks(data, keySize) {
+    const blocks = Array.from({ length: keySize }, () => []);
 
-    for (let i = 0; i < cypherData.length; i += keySize) {
-        cypherTextInKeySizeChunks.push(cypherData.subarray(i, i + keySize));
+    for (let i = 0; i < data.length; i++) {
+        blocks[i % keySize].push(data[i]);
     }
 
-    // Transposed: A block that is first byte of every block, another that is second byte of every block and so on:
-    const transposedBlocks = _transposeBlocks(cypherTextInKeySizeChunks, keySize);
-    
+    return blocks.map(block => Buffer.from(block));
+}
+
+// Turn into hex, find encryption key, build up string from bytes (keys)
+function _determineKey(transposedBlocks) {
+    let key = '';
+
     for (const block of transposedBlocks) {
-        // Needs to do what findEncryptionKey does
+        const hexBlock = block.toString('hex');
+        const { key: singleByteKey } = findEncryptionKey(hexBlock);
+        
+        key += String.fromCharCode(singleByteKey);
     }
+
+    return key;
+}
+
+// Finds the key used to encrypt the file
+function breakRepeatingKeyXOR(fileName) {
+    const cypherData = _readAndDecodeFile(fileName);
+    const keySize = _findProbableKeySize(cypherData);
+    const transposedBlocks = _transposeKeySizedBlocks(cypherData, keySize);
+
+    return _determineKey(transposedBlocks);
+}
+
+function repeatingKeyXORForFile(fileName, key) {
+    const cypherData = _readAndDecodeFile(fileName);
+
+    // This is doing what repeatingKeyXOR is doing:
+    const keyBytes = Buffer.from(key, 'utf8');
+    const buffer = Buffer.alloc(cypherData.length);
+
+    for (let i = 0; i < cypherData.length; i++) {
+        const keyIndex = i % key.length;
+
+       // xor them 
+        buffer[i] = cypherData[i] ^ keyBytes[keyIndex];
+    }
+
+    return buffer.toString('utf8');
 }
 
 module.exports = {
@@ -339,6 +358,7 @@ module.exports = {
     repeatingKeyXOR,
     getHammingDistance,
     breakRepeatingKeyXOR,
+    repeatingKeyXORForFile,
 };
 
 // 1111
