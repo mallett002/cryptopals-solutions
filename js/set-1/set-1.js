@@ -244,6 +244,8 @@ function getHammingDistance(aBytes, bBytes) {
     return differingBitCount;
 }
 
+// Takes in binary data and split it into incremental chunks.
+// Finds the chunk size with the lowest average hamming distance (most similar bits)
 function _findProbableKeySize(cypherData) {
     let keySizeWithSmallestHammingDistance = 2;
     let smallestNormalizedDistance = Infinity;
@@ -289,24 +291,14 @@ function _findProbableKeySize(cypherData) {
     return keySizeWithSmallestHammingDistance;
 }
 
-// Make a block that is the first byte of every block, and a block that is the second byte of every block, and so on.
-function _transposeBlocks(data, keySize) {
-    // const transposedBlocks = [];
+function _readAndDecodeFile(fileName) {
+    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8');
 
-    // for (let keyIndex = 0; keyIndex < keySize; keyIndex++) {
-    //     const newChunk = [];
+    return Buffer.from(file, 'base64');
+}
 
-    //     for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-    //         if (chunks[chunkIndex][keyIndex]) {
-    //             newChunk.push(chunks[chunkIndex][keyIndex]);
-    //         }
-    //     }
-
-    //     transposedBlocks.push(newChunk);
-    // }
-
-    // return transposedBlocks.map(block => Buffer.from(block));
-
+// Make a block, of size keysize, that is the first byte of every block, and a block that is the second byte of every block, and so on.
+function _transposeKeySizedBlocks(data, keySize) {
     const blocks = Array.from({ length: keySize }, () => []);
 
     for (let i = 0; i < data.length; i++) {
@@ -316,14 +308,8 @@ function _transposeBlocks(data, keySize) {
     return blocks.map(block => Buffer.from(block));
 }
 
-function breakRepeatingKeyXOR(fileName) {
-    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf8'); // read file in as a string
-    const cypherData = Buffer.from(file, 'base64');
-    const keySize = _findProbableKeySize(cypherData);
-    
-    // Transposed: A block that is first byte of every block, another that is second byte of every block and so on:
-    const transposedBlocks = _transposeBlocks(cypherData, keySize);
-
+// Turn into hex, find encryption key, build up string from bytes (keys)
+function _determineKey(transposedBlocks) {
     let key = '';
 
     for (const block of transposedBlocks) {
@@ -333,96 +319,16 @@ function breakRepeatingKeyXOR(fileName) {
         key += String.fromCharCode(singleByteKey);
     }
 
-    console.log({key});
+    return key;
 }
 
+function breakRepeatingKeyXOR(fileName) {
+    const cypherData = _readAndDecodeFile(fileName);
+    const keySize = _findProbableKeySize(cypherData);
+    const transposedBlocks = _transposeKeySizedBlocks(cypherData, keySize);
 
-// AI:
-function readAndDecodeFile(fileName) {
-    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8');
-
-    return Buffer.from(file, 'base64');
+    return _determineKey(transposedBlocks);
 }
-
-function hammingDistance(a, b) {
-    let distance = 0;
-
-    for (let i = 0; i < a.length; i++) {
-        let xor = a[i] ^ b[i];
-
-        while (xor > 0) {
-            distance += xor & 1;
-            xor >>= 1;
-        }
-    }
-
-    return distance;
-}
-
-function findProbableKeySize(data) {
-    let keySizes = [];
-
-    for (let keySize = 2; keySize <= 40; keySize++) {
-        let distances = [];
-
-        for (let i = 0; i < data.length - keySize * 2; i += keySize) {
-            const chunk1 = data.slice(i, i + keySize);
-            const chunk2 = data.slice(i + keySize, i + keySize * 2);
-            const distance = hammingDistance(chunk1, chunk2) / keySize;
-
-            distances.push(distance);
-        }
-
-        const avgDistance = distances.reduce((a, b) => a + b) / distances.length;
-
-        keySizes.push({ keySize, avgDistance });
-    }
-
-    keySizes.sort((a, b) => a.avgDistance - b.avgDistance);
-
-    return keySizes[0].keySize;
-}
-
-function transposeBlocks(data, keySize) {
-    const blocks = Array.from({ length: keySize }, () => []);
-
-    for (let i = 0; i < data.length; i++) {
-        blocks[i % keySize].push(data[i]);
-    }
-
-    return blocks.map(block => Buffer.from(block));
-}
-
-function decryptRepeatingKeyXOR(data, key) {
-    let decrypted = '';
-
-    for (let i = 0; i < data.length; i++) {
-        decrypted += String.fromCharCode(data[i] ^ key[i % key.length]);
-    }
-
-    return decrypted;
-}
-
-// Putting it all together
-function aiBreakRepeatingKeyXOR(fileName) {
-    const data = readAndDecodeFile(fileName);
-    const keySize = findProbableKeySize(data);
-    const transposedBlocks = transposeBlocks(data, keySize);
-    
-    let key = '';
-
-    for (const block of transposedBlocks) {
-        const hexString = block.toString('hex');
-        const { key: singleByteKey } = findEncryptionKey(hexString);
-
-        key += String.fromCharCode(singleByteKey);
-    }
-
-    const decryptedText = decryptRepeatingKeyXOR(data, key);
-    console.log('Decryption key:', key);
-    console.log('Decrypted text:', decryptedText);
-}
-
 
 module.exports = {
     hexToBase64,
@@ -434,7 +340,6 @@ module.exports = {
     repeatingKeyXOR,
     getHammingDistance,
     breakRepeatingKeyXOR,
-    aiBreakRepeatingKeyXOR,
 };
 
 // 1111
