@@ -258,12 +258,62 @@ func readFileAsBytes(fileName string) []byte {
 	- compares hamming distance of 4 chunks of keysize and gets an average hamming distance of that keysize
 	- key length with lowest hamming distance is probably the key
 */
-// This isn't working. Getting 3, but know it's 29
+// This isn't working. Getting 20, but know it's 29
 func findProbableKeyLength(data []byte) int {
-	startKeySize := 2
-	lowestAverage := math.MaxFloat64
-	bestKeySize := startKeySize
+    var bestKeySize int
+    lowestAverage := math.MaxFloat64
 
+    for keySize := 2; keySize <= 40; keySize++ {
+        var distances []float64 // distances for this key
+        chunkCount := len(data) / keySize
+
+		// put data in key size chunks and compare i with i + 1
+        for i := 0; i < chunkCount-1; i++ {
+            chunk1 := data[i * keySize : (i + 1) * keySize]
+            chunk2 := data[(i + 1) * keySize : (i + 2) * keySize]
+
+            dist := GetHammingDistance(chunk1, chunk2)
+            normalizedDistance := float64(dist) / float64(keySize)
+            distances = append(distances, normalizedDistance)
+        }
+
+        avgDist := 0.0
+        for _, dist := range distances {
+            avgDist += dist
+        }
+        avgDist /= float64(len(distances))
+
+        if avgDist < lowestAverage {
+            lowestAverage = avgDist
+            bestKeySize = keySize
+        }
+    }
+
+    return bestKeySize
+}
+
+/* 
+	- Reads a file that has been repeating key XOR encrypted and then base64 encoded.
+	- Discovers the key used to encrypt the file
+*/ 
+func BreakRepeatingKeyXOR(fileName string) string {
+	// Read the file, turns it into bytes
+	cypherData := readFileAsBytes(fileName)
+
+	// Find the probable key length
+	keySize := findProbableKeyLength(cypherData)
+	fmt.Printf("Probable key length: %v\n", keySize)
+
+	// Find the key
+	return "fooey"
+}
+
+
+// old contents of findProbableKeyLength:
+	// startKeySize := 2
+	// lowestAverage := math.MaxFloat64
+	// bestKeySize := startKeySize
+	//	
 	// for keySize := startKeySize; keySize <= 40; keySize++ {
 	// 	if len(data) < keySize * 4 {
 	// 		continue // Skip if not enough data for 4 chunks
@@ -302,23 +352,5 @@ func findProbableKeyLength(data []byte) int {
 	// 		bestKeySize = keySize
 	// 	}
 	// }
-
-	
-	return bestKeySize
-}
-
-/* 
-	- Reads a file that has been repeating key XOR encrypted and then base64 encoded.
-	- Discovers the key used to encrypt the file
-*/ 
-func BreakRepeatingKeyXOR(fileName string) string {
-	// Read the file, turns it into bytes
-	cypherData := readFileAsBytes(fileName)
-
-	// Find the probable key length
-	keySize := findProbableKeyLength(cypherData)
-	fmt.Printf("Probable key length: %v\n", keySize)
-
-	// Find the key
-	return "fooey"
-}
+	//
+	// return bestKey
