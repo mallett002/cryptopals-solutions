@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/base64"
 	"encoding/hex"
-	// "fmt"
+	"fmt"
 	// "sync"
 
 	// "io"
@@ -211,9 +211,7 @@ func max(a, b int) int {
     return b
 }
 
-func GetHammingDistance(a string, b string) int {
-	aBytes := []byte(a)
-	bBytes := []byte(b)
+func GetHammingDistance(aBytes []byte, bBytes []byte) int {
 	length := max(len(aBytes), len(bBytes))
 
 	differingBitCount := 0
@@ -228,4 +226,98 @@ func GetHammingDistance(a string, b string) int {
 	}
 
 	return differingBitCount
+}
+
+func readFileAsBytes(fileName string) []byte {
+	file, err := os.Open(filepath.Join("..", "data", fileName))
+
+	if err != nil {
+		log.Fatalf("unable to read file: %v", err)
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	var data []byte
+
+	for scanner.Scan() {
+		data = append(data, scanner.Bytes()...)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Println("Error reading file:", err)
+	}
+
+	return data
+}
+
+/*
+	- Tries to discover key length
+	- Breaks the data into chunks of estimated keysize (2 - 40)
+	- compares hamming distance of 4 chunks of keysize and gets an average hamming distance of that keysize
+	- key length with lowest hamming distance is probably the key
+*/
+// This isn't working. Getting 3, but know it's 29
+func findProbableKeyLength(data []byte) int {
+	startKeySize := 2
+	lowestAverage := float64(math.Inf(1)) // positive largest float64
+	bestKeySize := startKeySize
+
+	for keySize := startKeySize; keySize <= 40; keySize++ {
+		if len(data) < keySize*4 {
+			continue // Skip if not enough data for 4 chunks
+		}
+
+		keySizeChunks := [][]byte{
+			data[0:keySize],
+			data[keySize:keySize * 2],
+			data[keySize * 2:keySize * 3],
+			data[keySize * 3:keySize * 4],
+		}
+
+		// compare chunks to get average hamming distance for this keySize
+		var averagesForKey []float64
+
+		for i, chunk := range keySizeChunks {
+			for j := i + 1; j < len(keySizeChunks); j++ {
+				normalizedDistance := float64(GetHammingDistance(chunk, keySizeChunks[j])) / float64(keySize)
+				averagesForKey = append(averagesForKey, normalizedDistance)
+			}
+		}
+
+		// Get overall average for key:
+		var overallAverageForKey float64
+		sum := float64(0.0)
+
+		for _, average := range averagesForKey {
+			sum += average
+		}
+
+		overallAverageForKey = sum / float64(len(averagesForKey))
+
+		// see if average for this key is smaller than current lowest average
+		if overallAverageForKey < lowestAverage {
+			lowestAverage = overallAverageForKey
+			bestKeySize = keySize
+		}
+	}
+
+	return bestKeySize
+}
+
+/* 
+	- Reads a file that has been repeating key XOR encrypted and then base64 encoded.
+	- Discovers the key used to encrypt the file
+*/ 
+func BreakRepeatingKeyXOR(fileName string) string {
+	// Read the file, turns it into bytes
+	cypherData := readFileAsBytes(fileName)
+
+	// Find the probable key length
+	keySize := aiFindProbableKeyLength(cypherData)
+	fmt.Printf("Probable key length: %v\n", keySize)
+
+	// Find the key
+	return "fooey"
 }

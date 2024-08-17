@@ -59,5 +59,9 @@ func TestBreakRepeatingKeyXOR(t *testing.T) {
 	    - write function to compute Hamming distance btw 2 strings (number of differing bits) 
        */
 	// Hamming distance
-	assert.Equal(t, 37, GetHammingDistance("this is a test", "wokka wokka!!!"))
+	assert.Equal(t, 37, GetHammingDistance([]byte("this is a test"), []byte("wokka wokka!!!")))
+
+	key := BreakRepeatingKeyXOR("6.txt");
+ 
+	assert.Equal(t, "fooey", key)
 }
