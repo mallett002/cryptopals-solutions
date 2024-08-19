@@ -293,6 +293,15 @@ func findProbableKeyLength(data []byte) int {
 	return bestKey
 }
 
+/*
+	- Breaks bytes into blocks of keySize
+	- returns new blocks where 1st block is the 1st byte of every keySize block..
+	- ...2nd is 2nd byte of every keySize block, and so on
+*/
+func transposeBlocks(data []byte, keySize int) []byte {
+	
+}
+
 /* 
 	- Reads a file that has been repeating key XOR encrypted and then base64 encoded.
 	- Discovers the key used to encrypt the file
