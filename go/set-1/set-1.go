@@ -211,6 +211,7 @@ func max(a, b int) int {
     return b
 }
 
+// Gets amount of differing bites for aBytes and bBytes
 func GetHammingDistance(aBytes []byte, bBytes []byte) int {
 	length := max(len(aBytes), len(bBytes))
 
@@ -255,41 +256,41 @@ func readFileAsBytes(fileName string) []byte {
 /*
 	- Tries to discover key length
 	- Breaks the data into chunks of estimated keysize (2 - 40)
-	- compares hamming distance of 4 chunks of keysize and gets an average hamming distance of that keysize
+	- compares hamming distance of 2 consecutive chunks of size "keysize" and gets an average hamming distance of that keysize
 	- key length with lowest hamming distance is probably the key
 */
-// This isn't working. Getting 20, but know it's 29
 func findProbableKeyLength(data []byte) int {
-    var bestKeySize int
-    lowestAverage := math.MaxFloat64
+	smallestAverage := math.MaxFloat64
+	bestKey := 2
 
-    for keySize := 2; keySize <= 40; keySize++ {
-        var distances []float64 // distances for this key
-        chunkCount := len(data) / keySize
+	for maybeKeySize := 2; maybeKeySize <= 41; maybeKeySize++ { // for each potential keySize
+		amtOfChunks := len(data) / maybeKeySize
+		averagesForKey := make([]float64, 0)
 
-		// put data in key size chunks and compare i with i + 1
-        for i := 0; i < chunkCount-1; i++ {
-            chunk1 := data[i * keySize : (i + 1) * keySize]
-            chunk2 := data[(i + 1) * keySize : (i + 2) * keySize]
+		// build up distances per key
+		for i := 0; i < amtOfChunks - 1; i++ {
+			chunkOne := data[i * maybeKeySize : (i + 1) * maybeKeySize]
+			chunkTwo := data[(i + 1) * maybeKeySize : (i + 2) * maybeKeySize]
 
-            dist := GetHammingDistance(chunk1, chunk2)
-            normalizedDistance := float64(dist) / float64(keySize)
-            distances = append(distances, normalizedDistance)
-        }
+			distance := GetHammingDistance(chunkOne, chunkTwo)
+			aveDistancePerKey := float64(distance) / float64(maybeKeySize)
+			averagesForKey = append(averagesForKey, aveDistancePerKey)
+		} 
+		
+		// determine best key (one with the smallest total average)
+		sum := float64(0)
+		for _, ave := range averagesForKey {
+			sum += ave
+		}
+		aveForKey := sum / float64(len(averagesForKey))
 
-        avgDist := 0.0
-        for _, dist := range distances {
-            avgDist += dist
-        }
-        avgDist /= float64(len(distances))
+		if (aveForKey < smallestAverage) {
+			bestKey = maybeKeySize
+			smallestAverage = aveForKey
+		}
+	}
 
-        if avgDist < lowestAverage {
-            lowestAverage = avgDist
-            bestKeySize = keySize
-        }
-    }
-
-    return bestKeySize
+	return bestKey
 }
 
 /* 
@@ -307,50 +308,3 @@ func BreakRepeatingKeyXOR(fileName string) string {
 	// Find the key
 	return "fooey"
 }
-
-
-// old contents of findProbableKeyLength:
-	// startKeySize := 2
-	// lowestAverage := math.MaxFloat64
-	// bestKeySize := startKeySize
-	//	
-	// for keySize := startKeySize; keySize <= 40; keySize++ {
-	// 	if len(data) < keySize * 4 {
-	// 		continue // Skip if not enough data for 4 chunks
-	// 	}
-	// 
-	// 	keySizeChunks := [][]byte{
-	// 		data[0:keySize],
-	// 		data[keySize:keySize * 2],
-	// 		data[keySize * 2:keySize * 3],
-	// 		data[keySize * 3:keySize * 4],
-	// 	}
-	//
-	// 	// compare chunks to get average hamming distance for this keySize
-	// 	var averagesForKey []float64
-	//
-	// 	for i, chunk := range keySizeChunks {
-	// 		for j := i + 1; j < len(keySizeChunks); j++ {
-	// 			normalizedDistance := float64(GetHammingDistance(chunk, keySizeChunks[j])) / float64(keySize)
-	// 			averagesForKey = append(averagesForKey, normalizedDistance)
-	// 		}
-	// 	}
-	//
-	// 	// Get overall average for key:
-	// 	var overallAverageForKey float64
-	// 	sum := float64(0.0)
-	//	
-	// 	for _, average := range averagesForKey {
-	// 		sum += average
-	// 	}
-	//		
-	// 	overallAverageForKey = sum / float64(len(averagesForKey))
-	//	
-	// 	// see if average for this key is smaller than current lowest average
-	// 	if overallAverageForKey < lowestAverage {
-	// 		lowestAverage = overallAverageForKey
-	// 		bestKeySize = keySize
-	// 	}
-	// }
-	//
-	// return bestKey
