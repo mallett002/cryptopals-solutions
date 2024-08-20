@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
+	// "fmt"
 	// "sync"
 
 	// "io"
@@ -294,12 +294,32 @@ func findProbableKeyLength(data []byte) int {
 }
 
 /*
-	- Breaks bytes into blocks of keySize
+	- Breaks bytes into blocks
 	- returns new blocks where 1st block is the 1st byte of every keySize block..
 	- ...2nd is 2nd byte of every keySize block, and so on
+	Ex:
+	data: 			[abc123defg456]
+	keysize blocks: [abc, 123, def, g45, 6]
+	transposed: 	[a1dg6, b2e4, c3f5]
+
+
 */
-func transposeBlocks(data []byte, keySize int) []byte {
-	
+func TransposeBlocks(data []byte, keySize int) [][]byte {
+	transposedBlocks := make([][]byte, 0)
+
+	for i := 0; i < len(data); i += keySize {
+		chunk := make([]byte, 0)
+
+		chunkIndex := i % keySize	
+
+		for chunkIndex > keySize {
+			chunk = append(chunk, data[i])
+		}
+
+		transposedBlocks = append(transposedBlocks, chunk)
+	}
+
+	return transposedBlocks
 }
 
 /* 
@@ -312,7 +332,8 @@ func BreakRepeatingKeyXOR(fileName string) string {
 
 	// Find the probable key length
 	keySize := findProbableKeyLength(cypherData)
-	fmt.Printf("Probable key length: %v\n", keySize)
+
+	TransposeBlocks(cypherData, keySize)
 
 	// Find the key
 	return "fooey"

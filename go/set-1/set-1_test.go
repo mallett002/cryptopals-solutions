@@ -2,6 +2,7 @@ package main
 
 import (
 	"testing"
+	"fmt"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -64,4 +65,21 @@ func TestBreakRepeatingKeyXOR(t *testing.T) {
 	key := BreakRepeatingKeyXOR("6.txt");
  
 	assert.Equal(t, "fooey", key)
+}
+
+func TestTransposeBlocks(t *testing.T) {
+	str := "hello world"
+	bites := []byte(str) 
+	
+	// [104 101 108, 108 111 32, 119 111 114, 108 100]
+	// [hel, lo_, wor, ld]
+	expected := [][]byte{
+		{104, 108, 119, 108},
+		{101, 111, 111, 100},
+		{108, 32, 114},
+	}
+
+	result := TransposeBlocks(bites, 3)
+
+	assert.Equal(t, expected, result)
 }
