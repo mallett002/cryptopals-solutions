@@ -295,28 +295,35 @@ func findProbableKeyLength(data []byte) int {
 
 /*
 	- Breaks bytes into blocks
-	- returns new blocks where 1st block is the 1st byte of every keySize block..
-	- ...2nd is 2nd byte of every keySize block, and so on
+	- returns new blocks where 1st block is the 1st byte of every block, 2nd is 2nd byte of every keySize block, and so on
 	Ex:
 	data: 			[abc123defg456]
 	keysize blocks: [abc, 123, def, g45, 6]
-	transposed: 	[a1dg6, b2e4, c3f5]
+	transposed: 	[a1dg6, ]
 
 
 */
 func TransposeBlocks(data []byte, keySize int) [][]byte {
+	keySizedBlocks := make([][]byte, 0)
+
+	// First put them in keysize blocks:
+	for i := 0; i < len(data); i += keySize {
+		keySizedBlocks = append(keySizedBlocks, data[i : i + keySize])		
+	}
+
+	// then transpose them
 	transposedBlocks := make([][]byte, 0)
 
-	for i := 0; i < len(data); i += keySize {
-		chunk := make([]byte, 0)
+	for i := 0; i < keySize; i++ {
+		block := make([]byte, 0)
 
-		chunkIndex := i % keySize	
+		for _, keySizedBlock := range keySizedBlocks {
+			if i < len(keySizedBlock) {
+				block = append(block, keySizedBlock[i])
+			}
+		}	
 
-		for chunkIndex > keySize {
-			chunk = append(chunk, data[i])
-		}
-
-		transposedBlocks = append(transposedBlocks, chunk)
+		transposedBlocks = append(transposedBlocks, block)
 	}
 
 	return transposedBlocks

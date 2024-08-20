@@ -81,5 +81,8 @@ func TestTransposeBlocks(t *testing.T) {
 
 	result := TransposeBlocks(bites, 3)
 
+	fmt.Printf("expected: %v/\n", expected)
+	fmt.Printf("result: %v/\n", result)
+
 	assert.Equal(t, expected, result)
 }
