@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"encoding/base64"
 	"encoding/hex"
+	// "strings"
+
 	// "fmt"
 	// "sync"
 
@@ -318,15 +320,32 @@ func TransposeBlocks(data []byte, keySize int) [][]byte {
 		block := make([]byte, 0)
 
 		for _, keySizedBlock := range keySizedBlocks {
-			if i < len(keySizedBlock) {
-				block = append(block, keySizedBlock[i])
+			if i > len(keySizedBlock) - 1 {
+				continue
 			}
+
+			block = append(block, keySizedBlock[i])
 		}	
 
 		transposedBlocks = append(transposedBlocks, block)
 	}
 
 	return transposedBlocks
+}
+
+// Todo: this function needs work, not quite right
+func getKeyFromBlocks(transposedBlocks [][]byte) string {
+	// solve each block as if it were single-char-xor
+		// turn each block into hex and run it through GetKeyAndScoreForLine
+
+	keyBytes := make([]byte, 0)	
+
+	for _, block := range transposedBlocks {
+		key, _ := GetKeyAndScoreForLine(hex.EncodeToString(block))
+		keyBytes = append(keyBytes, byte(key))
+	}	
+
+	return string(keyBytes)
 }
 
 /* 
@@ -339,9 +358,7 @@ func BreakRepeatingKeyXOR(fileName string) string {
 
 	// Find the probable key length
 	keySize := findProbableKeyLength(cypherData)
+	transposedBlocks := TransposeBlocks(cypherData, keySize)
 
-	TransposeBlocks(cypherData, keySize)
-
-	// Find the key
-	return "fooey"
+	return getKeyFromBlocks(transposedBlocks)
 }
