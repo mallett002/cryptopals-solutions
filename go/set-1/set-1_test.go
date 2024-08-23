@@ -64,7 +64,7 @@ func TestBreakRepeatingKeyXOR(t *testing.T) {
 
 	key := BreakRepeatingKeyXOR("6.txt");
  
-	assert.Equal(t, "fooey", key)
+	assert.Equal(t, "Terminator X: Bring the noise", key)
 }
 
 func TestTransposeBlocks(t *testing.T) {

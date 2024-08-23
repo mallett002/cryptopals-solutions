@@ -306,31 +306,17 @@ func findProbableKeyLength(data []byte) int {
 
 */
 func TransposeBlocks(data []byte, keySize int) [][]byte {
-	keySizedBlocks := make([][]byte, 0)
+	transposed := make([][]byte, keySize)
 
-	// First put them in keysize blocks:
-	for i := 0; i < len(data); i += keySize {
-		keySizedBlocks = append(keySizedBlocks, data[i : i + keySize])		
+	for i := range transposed {
+		transposed[i] = make([]byte, 0, len(data)/keySize+1)
 	}
 
-	// then transpose them
-	transposedBlocks := make([][]byte, 0)
-
-	for i := 0; i < keySize; i++ {
-		block := make([]byte, 0)
-
-		for _, keySizedBlock := range keySizedBlocks {
-			if i > len(keySizedBlock) - 1 {
-				continue
-			}
-
-			block = append(block, keySizedBlock[i])
-		}	
-
-		transposedBlocks = append(transposedBlocks, block)
+	for i := 0; i < len(data); i++ {
+		transposed[i % keySize] = append(transposed[i % keySize], data[i])
 	}
 
-	return transposedBlocks
+	return transposed
 }
 
 // Todo: this function needs work, not quite right
@@ -371,8 +357,6 @@ func BreakRepeatingKeyXOR(fileName string) string {
 	keySize := findProbableKeyLength(decodedCypherData)
 
 	transposedBlocks := TransposeBlocks(decodedCypherData, keySize)
-	fmt.Println(transposedBlocks)
 
-	// return getKeyFromBlocks(transposedBlocks)
-	return "fooey"
+	return getKeyFromBlocks(transposedBlocks)
 }
