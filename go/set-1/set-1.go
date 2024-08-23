@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	// "strings"
 
-	// "fmt"
+	"fmt"
 	// "sync"
 
 	// "io"
@@ -348,17 +348,31 @@ func getKeyFromBlocks(transposedBlocks [][]byte) string {
 	return string(keyBytes)
 }
 
+func decodeBase64(data []byte) []byte {
+	decoded, err := base64.StdEncoding.DecodeString(string(data))
+
+	if err != nil {
+		log.Fatalf("Base64 decoding error: %v", err)
+	}
+
+	return decoded
+}
+
 /* 
 	- Reads a file that has been repeating key XOR encrypted and then base64 encoded.
 	- Discovers the key used to encrypt the file
 */ 
 func BreakRepeatingKeyXOR(fileName string) string {
-	// Read the file, turns it into bytes
+	// Read the file, turns it into bytes, then decode it from bas64
 	cypherData := readFileAsBytes(fileName)
+	decodedCypherData := decodeBase64(cypherData)
 
 	// Find the probable key length
-	keySize := findProbableKeyLength(cypherData)
-	transposedBlocks := TransposeBlocks(cypherData, keySize)
+	keySize := findProbableKeyLength(decodedCypherData)
 
-	return getKeyFromBlocks(transposedBlocks)
+	transposedBlocks := TransposeBlocks(decodedCypherData, keySize)
+	fmt.Println(transposedBlocks)
+
+	// return getKeyFromBlocks(transposedBlocks)
+	return "fooey"
 }
