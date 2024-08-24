@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	// "strings"
 
-	"fmt"
+	// "fmt"
 	// "sync"
 
 	// "io"
@@ -301,28 +301,25 @@ func findProbableKeyLength(data []byte) int {
 	Ex:
 	data: 			[abc123defg456]
 	keysize blocks: [abc, 123, def, g45, 6]
-	transposed: 	[a1dg6, ]
-
-
+	transposed: 	[a1dg6, b2d4, c3f5]
 */
 func TransposeBlocks(data []byte, keySize int) [][]byte {
-	transposed := make([][]byte, keySize)
-
-	for i := range transposed {
-		transposed[i] = make([]byte, 0, len(data)/keySize+1)
-	}
+	transposed := make([][]byte, keySize) // will have "keySize" amt of elements
 
 	for i := 0; i < len(data); i++ {
+		// append the byte into the block at "i % keySize"
 		transposed[i % keySize] = append(transposed[i % keySize], data[i])
 	}
 
 	return transposed
 }
 
-// Todo: this function needs work, not quite right
+/*
+	- Solve each block as if it were single-char-xor.
+	- Turn each block into hex and run it through GetKeyAndScoreForLine
+	- Builds up each key as a string and returns it
+*/
 func getKeyFromBlocks(transposedBlocks [][]byte) string {
-	// solve each block as if it were single-char-xor
-		// turn each block into hex and run it through GetKeyAndScoreForLine
 
 	keyBytes := make([]byte, 0)	
 
