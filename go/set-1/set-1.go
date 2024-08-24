@@ -296,22 +296,27 @@ func findProbableKeyLength(data []byte) int {
 }
 
 /*
-	- Breaks bytes into blocks
+	- Breaks bytes into blocks that were encrypted using same single byte xor
 	- returns new blocks where 1st block is the 1st byte of every block, 2nd is 2nd byte of every keySize block, and so on
 	Ex:
 	data: 			[abc123defg456]
 	keysize blocks: [abc, 123, def, g45, 6]
-	transposed: 	[a1dg6, b2d4, c3f5]
+	transposed: 	[a1dg6, b2d4, c3f5] each block here was encrypted with same key
+		Example: 
+		- Imagine the key was "KEY"
+		- block at index 0 was encrtyped with char "K"
+		- block at index 1 with "E"
+		- block at index 2 with "Y"
 */
 func TransposeBlocks(data []byte, keySize int) [][]byte {
-	transposed := make([][]byte, keySize) // will have "keySize" amt of elements
+	blocksEncryptedBySameKey := make([][]byte, keySize) // will have "keySize" amt of elements
 
 	for i := 0; i < len(data); i++ {
 		// append the byte into the block at "i % keySize"
-		transposed[i % keySize] = append(transposed[i % keySize], data[i])
+		blocksEncryptedBySameKey[i % keySize] = append(blocksEncryptedBySameKey[i % keySize], data[i])
 	}
 
-	return transposed
+	return blocksEncryptedBySameKey
 }
 
 /*
@@ -353,7 +358,7 @@ func BreakRepeatingKeyXOR(fileName string) string {
 	// Find the probable key length
 	keySize := findProbableKeyLength(decodedCypherData)
 
-	transposedBlocks := TransposeBlocks(decodedCypherData, keySize)
+	blocksEncryptedBySameKey  := TransposeBlocks(decodedCypherData, keySize)
 
-	return getKeyFromBlocks(transposedBlocks)
+	return getKeyFromBlocks(blocksEncryptedBySameKey )
 }
