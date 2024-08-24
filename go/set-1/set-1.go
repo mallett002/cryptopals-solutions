@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"encoding/base64"
 	"encoding/hex"
+	// "strings"
+
 	// "fmt"
 	// "sync"
 
@@ -211,9 +213,8 @@ func max(a, b int) int {
     return b
 }
 
-func GetHammingDistance(a string, b string) int {
-	aBytes := []byte(a)
-	bBytes := []byte(b)
+// Gets amount of differing bites for aBytes and bBytes
+func GetHammingDistance(aBytes []byte, bBytes []byte) int {
 	length := max(len(aBytes), len(bBytes))
 
 	differingBitCount := 0
@@ -228,4 +229,131 @@ func GetHammingDistance(a string, b string) int {
 	}
 
 	return differingBitCount
+}
+
+func readFileAsBytes(fileName string) []byte {
+	file, err := os.Open(filepath.Join("..", "data", fileName))
+
+	if err != nil {
+		log.Fatalf("unable to read file: %v", err)
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	var data []byte
+
+	for scanner.Scan() {
+		data = append(data, scanner.Bytes()...)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Println("Error reading file:", err)
+	}
+
+	return data
+}
+
+/*
+	- Tries to discover key length
+	- Breaks the data into chunks of estimated keysize (2 - 40)
+	- compares hamming distance of 2 consecutive chunks of size "keysize" and gets an average hamming distance of that keysize
+	- key length with lowest hamming distance is probably the key
+*/
+func findProbableKeyLength(data []byte) int {
+	smallestAverage := math.MaxFloat64
+	bestKey := 2
+
+	for maybeKeySize := 2; maybeKeySize <= 41; maybeKeySize++ { // for each potential keySize
+		amtOfChunks := len(data) / maybeKeySize
+		averagesForKey := make([]float64, 0)
+
+		// build up distances per key
+		for i := 0; i < amtOfChunks - 1; i++ {
+			chunkOne := data[i * maybeKeySize : (i + 1) * maybeKeySize]
+			chunkTwo := data[(i + 1) * maybeKeySize : (i + 2) * maybeKeySize]
+
+			distance := GetHammingDistance(chunkOne, chunkTwo)
+			aveDistancePerKey := float64(distance) / float64(maybeKeySize)
+			averagesForKey = append(averagesForKey, aveDistancePerKey)
+		} 
+		
+		// determine best key (one with the smallest total average)
+		sum := float64(0)
+		for _, ave := range averagesForKey {
+			sum += ave
+		}
+		aveForKey := sum / float64(len(averagesForKey))
+
+		if (aveForKey < smallestAverage) {
+			bestKey = maybeKeySize
+			smallestAverage = aveForKey
+		}
+	}
+
+	return bestKey
+}
+
+/*
+	- Breaks bytes into blocks
+	- returns new blocks where 1st block is the 1st byte of every block, 2nd is 2nd byte of every keySize block, and so on
+	Ex:
+	data: 			[abc123defg456]
+	keysize blocks: [abc, 123, def, g45, 6]
+	transposed: 	[a1dg6, b2d4, c3f5]
+*/
+func TransposeBlocks(data []byte, keySize int) [][]byte {
+	transposed := make([][]byte, keySize) // will have "keySize" amt of elements
+
+	for i := 0; i < len(data); i++ {
+		// append the byte into the block at "i % keySize"
+		transposed[i % keySize] = append(transposed[i % keySize], data[i])
+	}
+
+	return transposed
+}
+
+/*
+	- Solve each block as if it were single-char-xor.
+	- Turn each block into hex and run it through GetKeyAndScoreForLine
+	- Builds up each key as a string and returns it
+*/
+func getKeyFromBlocks(transposedBlocks [][]byte) string {
+
+	keyBytes := make([]byte, 0)	
+
+	for _, block := range transposedBlocks {
+		key, _ := GetKeyAndScoreForLine(hex.EncodeToString(block))
+		keyBytes = append(keyBytes, byte(key))
+	}	
+
+	return string(keyBytes)
+}
+
+func decodeBase64(data []byte) []byte {
+	decoded, err := base64.StdEncoding.DecodeString(string(data))
+
+	if err != nil {
+		log.Fatalf("Base64 decoding error: %v", err)
+	}
+
+	return decoded
+}
+
+/* 
+	- Reads a file that has been repeating key XOR encrypted and then base64 encoded.
+	- Discovers the key used to encrypt the file
+*/ 
+func BreakRepeatingKeyXOR(fileName string) string {
+	// Read the file, turns it into bytes, then decode it from bas64
+	cypherData := readFileAsBytes(fileName)
+	decodedCypherData := decodeBase64(cypherData)
+
+	// Find the probable key length
+	keySize := findProbableKeyLength(decodedCypherData)
+
+	transposedBlocks := TransposeBlocks(decodedCypherData, keySize)
+
+	return getKeyFromBlocks(transposedBlocks)
 }
