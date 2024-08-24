@@ -76,6 +76,18 @@ describe('set-1', () => {
         // decrypt the file:
         const result = repeatingKeyXORForFile('6.txt', key);
         console.log('result: ', result);
+    });
+
+    test('C7: AES in ECB mode', () => {
+        /*
+            - File 7.txt has been encrypted via AES-128 in ECB mode under key YELLOW SUBMARINE and then bas64 encoded
+        */
+        const key = 'YELLOW SUBMARINE';
+
+        const decrypted = decryptFileAESinECBmode('7.txt', key);
+
+        console.log(decrypted);
         
+        expect(decrypted).toHaveLength(100);
     });
 });
