@@ -92,8 +92,6 @@ describe('set-1', () => {
 
         const decrypted = decryptFileAESinECBmode('7.txt', key);
 
-        console.log(decrypted);
-        
-        expect(decrypted).toHaveLength(100);
+        expect(decrypted).toHaveLength(2876);
     });
 });

@@ -1,5 +1,7 @@
+const crypto = require('node:crypto');
 const fs = require('fs');
 const path = require('path');
+const { log } = require('node:console');
 
 function hexToBase64(hexStr) {
     // Turn string into binary from hex and then turn into base64 string
@@ -354,7 +356,13 @@ function repeatingKeyXORForFile(fileName, key) {
 // symmetric block cipher: type of cipher that uses same key for encryption/decryption
     // block cipher: processed in fixed sized chunks
 function decryptAES(cipherText, key) {
+    const decipher = crypto.createDecipheriv('aes-128-ecb', key, null);
 
+    let result = decipher.update(cipherText, 'binary', 'utf8');
+
+    result += decipher.final('utf8');
+
+    return result;
 }
 
 function decryptFileAESinECBmode(fileName, key) {
@@ -362,8 +370,7 @@ function decryptFileAESinECBmode(fileName, key) {
     const cipherText = _readAndBase64Decode(fileName);
     
     // AES decrypt
-    const decryptedText = decryptAES(cipherText, key);
-
+    return decryptAES(cipherText, key);
 }
 
 module.exports = {
