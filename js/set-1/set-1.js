@@ -1,5 +1,7 @@
+const crypto = require('node:crypto');
 const fs = require('fs');
 const path = require('path');
+const { log } = require('node:console');
 
 function hexToBase64(hexStr) {
     // Turn string into binary from hex and then turn into base64 string
@@ -246,7 +248,7 @@ function getHammingDistance(aBytes, bBytes) {
 
 // Takes in binary data and split it into incremental chunks.
 // Finds the chunk size with the lowest average hamming distance (most similar bits)
-function _findProbableKeySize(cypherData) {
+function _findProbableKeySize(cipherData) {
     let keySizeWithSmallestHammingDistance = 2;
     let smallestNormalizedDistance = Infinity;
 
@@ -254,10 +256,10 @@ function _findProbableKeySize(cypherData) {
     // keySize that has the shortest average hemming distance is the found keySize
     for (let keySize = 2; keySize <= 40; keySize++) {
         const chunks = [
-            cypherData.subarray(0, keySize),
-            cypherData.subarray(keySize, keySize * 2),
-            cypherData.subarray(keySize * 2, keySize * 3),
-            cypherData.subarray(keySize * 3, keySize * 4),
+            cipherData.subarray(0, keySize),
+            cipherData.subarray(keySize, keySize * 2),
+            cipherData.subarray(keySize * 2, keySize * 3),
+            cipherData.subarray(keySize * 3, keySize * 4),
         ];
         const averagesForKey = [];
 
@@ -291,7 +293,7 @@ function _findProbableKeySize(cypherData) {
     return keySizeWithSmallestHammingDistance;
 }
 
-function _readAndDecodeFile(fileName) {
+function _readAndBase64Decode(fileName) {
     const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8');
 
     return Buffer.from(file, 'base64');
@@ -324,28 +326,51 @@ function _determineKey(transposedBlocks) {
 
 // Finds the key used to encrypt the file
 function breakRepeatingKeyXOR(fileName) {
-    const cypherData = _readAndDecodeFile(fileName);
-    const keySize = _findProbableKeySize(cypherData);
-    const transposedBlocks = _transposeKeySizedBlocks(cypherData, keySize);
+    const cipherData = _readAndBase64Decode(fileName);
+    const keySize = _findProbableKeySize(cipherData);
+    const transposedBlocks = _transposeKeySizedBlocks(cipherData, keySize);
 
     return _determineKey(transposedBlocks);
 }
 
 function repeatingKeyXORForFile(fileName, key) {
-    const cypherData = _readAndDecodeFile(fileName);
+    const cipherData = _readAndBase64Decode(fileName);
 
     // This is doing what repeatingKeyXOR is doing:
     const keyBytes = Buffer.from(key, 'utf8');
-    const buffer = Buffer.alloc(cypherData.length);
+    const buffer = Buffer.alloc(cipherData.length);
 
-    for (let i = 0; i < cypherData.length; i++) {
+    for (let i = 0; i < cipherData.length; i++) {
         const keyIndex = i % key.length;
 
        // xor them 
-        buffer[i] = cypherData[i] ^ keyBytes[keyIndex];
+        buffer[i] = cipherData[i] ^ keyBytes[keyIndex];
     }
 
     return buffer.toString('utf8');
+}
+
+// AES decrypt
+// AES: symmetric block cipher that decrypts in fixed-sized blocks (e.g., 128 bits for AES)
+// ECB mode: encrypts each block independently
+// symmetric block cipher: type of cipher that uses same key for encryption/decryption
+    // block cipher: processed in fixed sized chunks
+function decryptAES(cipherText, key) {
+    const decipher = crypto.createDecipheriv('aes-128-ecb', key, null);
+
+    let result = decipher.update(cipherText, 'binary', 'utf8');
+
+    result += decipher.final('utf8');
+
+    return result;
+}
+
+function decryptFileAESinECBmode(fileName, key) {
+    // base64 decode the ciphertext
+    const cipherText = _readAndBase64Decode(fileName);
+    
+    // AES decrypt
+    return decryptAES(cipherText, key);
 }
 
 module.exports = {
@@ -359,6 +384,7 @@ module.exports = {
     getHammingDistance,
     breakRepeatingKeyXOR,
     repeatingKeyXORForFile,
+    decryptFileAESinECBmode,
 };
 
 // 1111

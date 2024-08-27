@@ -9,6 +9,7 @@ const {
     getHammingDistance,
     breakRepeatingKeyXOR,
     repeatingKeyXORForFile,
+    decryptFileAESinECBmode,
 } = require("./set-1");
 
 describe('set-1', () => {
@@ -76,6 +77,21 @@ describe('set-1', () => {
         // decrypt the file:
         const result = repeatingKeyXORForFile('6.txt', key);
         console.log('result: ', result);
-        
+    });
+
+    test('C7: AES in ECB mode', () => {
+        /*
+            - File 7.txt has been encrypted via AES-128 in ECB mode under key YELLOW SUBMARINE and then bas64 encoded
+            - AES ECB: symmetric encryption. ECB - The same plaintext block will always encrypt to the same ciphertext if same key is used
+            - Terminology:
+                - Plaintext: original text trying to protect
+                - cipher: method or algorithm used to encrypt/decrypt
+                - ciphertext: encrypted output result of plaintext after encryption with cipher
+        */
+        const key = 'YELLOW SUBMARINE';
+
+        const decrypted = decryptFileAESinECBmode('7.txt', key);
+
+        expect(decrypted).toHaveLength(2876);
     });
 });
