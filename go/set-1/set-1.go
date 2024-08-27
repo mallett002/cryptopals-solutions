@@ -2,8 +2,11 @@ package main
 
 import (
 	"bufio"
+	"crypto"
+	"crypto/aes"
 	"encoding/base64"
 	"encoding/hex"
+
 	// "strings"
 
 	// "fmt"
@@ -352,13 +355,32 @@ func decodeBase64(data []byte) []byte {
 */ 
 func BreakRepeatingKeyXOR(fileName string) string {
 	// Read the file, turns it into bytes, then decode it from bas64
-	cypherData := readFileAsBytes(fileName)
-	decodedCypherData := decodeBase64(cypherData)
+	cipherData := readFileAsBytes(fileName)
+	decodedCipherData := decodeBase64(cipherData)
 
 	// Find the probable key length
-	keySize := findProbableKeyLength(decodedCypherData)
+	keySize := findProbableKeyLength(decodedCipherData)
 
-	blocksEncryptedBySameKey  := TransposeBlocks(decodedCypherData, keySize)
+	blocksEncryptedBySameKey := TransposeBlocks(decodedCipherData, keySize)
 
-	return getKeyFromBlocks(blocksEncryptedBySameKey )
+	return getKeyFromBlocks(blocksEncryptedBySameKey)
+}
+
+func DecryptAES(data []byte, key string) string {
+	block, err := aes.NewCipher([]byte(key))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cipherBytes := make([]byte, 0) // will this size be same as len(data)?
+	block.Decrypt(cipherBytes, data)
+}
+
+func DecryptFileAESinECBmode(fileName string, key string) string {
+	// Read file and decode base64
+	data := readFileAsBytes(fileName)
+	decoded := decodeBase64(data)
+
+	// Decrypt AES
+	return DecryptAES(decoded, key)
 }
