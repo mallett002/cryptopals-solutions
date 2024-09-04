@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"crypto"
 	"crypto/aes"
 	"encoding/base64"
 	"encoding/hex"
@@ -367,13 +366,24 @@ func BreakRepeatingKeyXOR(fileName string) string {
 }
 
 func DecryptAES(data []byte, key string) string {
-	block, err := aes.NewCipher([]byte(key))
+	cipher, err := aes.NewCipher([]byte(key))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cipherBytes := make([]byte, 0) // will this size be same as len(data)?
-	block.Decrypt(cipherBytes, data)
+	blockSize := len(key) // 16
+	plainText := make([]byte, len(data))
+	amtOfBlocks := len(plainText) / blockSize
+
+	// break data into key-sized chunks and decrypt them chunk by chunk (ECB mode)
+	for i := 0; i < amtOfBlocks; i++ {
+		start := i * blockSize // 0
+		end := (i + 1) * blockSize // 16
+
+		cipher.Decrypt(plainText[start:end], data[start:end])
+	}
+
+	return string(plainText)
 }
 
 func DecryptFileAESinECBmode(fileName string, key string) string {

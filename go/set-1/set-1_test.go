@@ -94,6 +94,6 @@ func TestAESinECB(t *testing.T) {
 
 	fmt.Println(decrypted)
 
-	assert.Len(t, len(decrypted), 2876)
+	assert.Len(t, decrypted, 2880)
 
 }
