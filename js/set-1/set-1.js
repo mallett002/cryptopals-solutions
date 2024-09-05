@@ -373,6 +373,43 @@ function decryptFileAESinECBmode(fileName, key) {
     return decryptAES(cipherText, key);
 }
 
+function _readAndHexDecode(fileName) {
+    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8');
+
+    return file.split('\n').map(line => Buffer.from(line, 'hex'));
+}
+
+/*
+1. Convert Hex-Encoded Ciphertext into Bytes:
+    The ciphertexts provided are in hexadecimal form. You’ll need to convert each hex string into its corresponding byte array for processing.
+    Hint: In JavaScript, you can convert a hex string to bytes by processing each two-character hex pair.
+
+2. Divide Each Ciphertext into Blocks:
+    AES uses a block size of 16 bytes (128 bits). After converting the ciphertext to bytes, you need to divide it into 16-byte blocks.
+    Hint: You can split the byte array into chunks of 16 bytes. In JavaScript, this can be done with a loop or array slicing.
+    
+3. Detect Repeated Blocks:
+    ECB mode will produce identical ciphertext blocks for identical plaintext blocks. This is a key characteristic of ECB’s deterministic nature.
+    Look for repeated blocks within each ciphertext. If a ciphertext has any repeated 16-byte blocks, it’s very likely encrypted with ECB.
+    Hint: You can store each block in an array or set, and then check if any block appears more than once.
+
+4. Identify the Ciphertext with Repeats:
+    The ciphertext that contains repeated blocks is the one encrypted with ECB. Return or print the index or the actual ciphertext.
+*/
+function detectAESinECB(fileName) {
+    const decodedData = _readAndHexDecode(fileName);
+    const blockSize = 16;
+
+    for (const buffer of decodedData) {
+        for (let i = 0; i < buffer.length / blockSize; i += blockSize) {
+            const block = buffer.subarray(i, i + blockSize);
+
+        }
+    }
+
+    return 'foo';
+}
+
 module.exports = {
     hexToBase64,
     xorHexStrings,
@@ -385,6 +422,7 @@ module.exports = {
     breakRepeatingKeyXOR,
     repeatingKeyXORForFile,
     decryptFileAESinECBmode,
+    detectAESinECB,
 };
 
 // 1111

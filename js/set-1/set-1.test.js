@@ -10,6 +10,7 @@ const {
     breakRepeatingKeyXOR,
     repeatingKeyXORForFile,
     decryptFileAESinECBmode,
+    detectAESinECB,
 } = require("./set-1");
 
 describe('set-1', () => {
@@ -82,7 +83,8 @@ describe('set-1', () => {
     test('C7: AES in ECB mode', () => {
         /*
             - File 7.txt has been encrypted via AES-128 in ECB mode under key YELLOW SUBMARINE and then bas64 encoded
-            - AES ECB: symmetric encryption. ECB - The same plaintext block will always encrypt to the same ciphertext if same key is used
+            - AES ECB: symmeotric encryption. ECB - The same plaintext block will always encrypt to the same ciphertext if same key is used
+            - AES is a block cipher. Encrypts data in blocks, usually bytes, rather than each individual bit.
             - Terminology:
                 - Plaintext: original text trying to protect
                 - cipher: method or algorithm used to encrypt/decrypt
@@ -93,5 +95,19 @@ describe('set-1', () => {
         const decrypted = decryptFileAESinECBmode('7.txt', key);
 
         expect(decrypted).toHaveLength(2876);
+    });
+
+    test('C8: Detect AES in ECB mode', () => {
+        /*
+            One of the hex-encoded ciphertexts has been encrypted with ECB. Detect it.
+            ECB is stateless - each block is processed independently; ie encrypting one block doesn't influence encryption of other.
+            Deterministic - encryption of same block with same key will always produce same result.
+        */
+
+        const plaintext = detectAESinECB('8.txt');
+
+        console.log('plaintext: ', plaintext);
+
+        expect(plaintext).toBeDefined();
     });
 });
