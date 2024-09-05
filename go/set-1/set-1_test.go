@@ -86,3 +86,14 @@ func TestTransposeBlocks(t *testing.T) {
 
 	assert.Equal(t, expected, result)
 }
+
+func TestAESinECB(t *testing.T) {
+	const key string = "YELLOW SUBMARINE";
+
+	var decrypted string = DecryptFileAESinECBmode("7.txt", key);
+
+	fmt.Println(decrypted)
+
+	assert.Len(t, decrypted, 2880)
+
+}
