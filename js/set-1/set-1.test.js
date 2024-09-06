@@ -106,7 +106,7 @@ describe('set-1', () => {
 
         const plaintext = detectAESinECB('8.txt');
 
-        console.log('plaintext: ', plaintext);
+        // console.log('plaintext: ', plaintext);
 
         expect(plaintext).toBeDefined();
     });

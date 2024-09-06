@@ -373,10 +373,41 @@ function decryptFileAESinECBmode(fileName, key) {
     return decryptAES(cipherText, key);
 }
 
-function _readAndHexDecode(fileName) {
-    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8');
+/**
+ * Reads a file with hex-encoded AES-ECB encrypted ciphertexts, 
+ * converts each line into a byte array, and splits each byte array into blocks of 16 bytes.
+ *
+ * @param {string} fileName - The name of the file to be read. Each line in the file is a hex-encoded ciphertext.
+ * @returns {Array<Array<Buffer>>} - A list of lists where each inner array represents a line of ciphertext 
+ *                                   divided into 16-byte blocks.
+ *                                   Format: [[[16Bytes, 16Bytes, ...]], [[16Bytes, 16Bytes, ...]], ...]
+ */
+function _readFileAndTransposeIntoBlocksOf16Bytes(fileName) {
+    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8'); // simply read in the file as text
+    const buffers = file.split('\n').map(line => Buffer.from(line, 'hex')); // create a list of buffers that hold bytes for each line (they are hex, so treat them accordingly)
 
-    return file.split('\n').map(line => Buffer.from(line, 'hex'));
+    // Create the final structure: a list of lists where each inner list contains 16-byte blocks
+    const buffersInBlocksOf16Bytes = buffers.map(buffer => {
+        const blocks = [];
+
+        for (let i = 0; i < buffer.length; i += 16) {
+            blocks.push(buffer.subarray(i, i + 16)); // Split buffer into 16-byte blocks
+        }
+
+        return blocks;
+    });
+
+    return buffersInBlocksOf16Bytes;
+}
+
+// check if block shows up in blocks more than once
+// blocks: [[16Bytes, 16Bytes, 16Bytes], [16Bytes, 16Bytes, ...]]
+function checkContainsDuplicates(blocks) {
+    for (let i = 0; i < blocks.length; i++) {
+        
+    }
+
+    return false;
 }
 
 /*
@@ -397,17 +428,18 @@ function _readAndHexDecode(fileName) {
     The ciphertext that contains repeated blocks is the one encrypted with ECB. Return or print the index or the actual ciphertext.
 */
 function detectAESinECB(fileName) {
-    const decodedData = _readAndHexDecode(fileName);
-    const blockSize = 16;
+    const ciphersInBlocksOf16Bytes = _readFileAndTransposeIntoBlocksOf16Bytes(fileName);
 
-    for (const buffer of decodedData) {
-        for (let i = 0; i < buffer.length / blockSize; i += blockSize) {
-            const block = buffer.subarray(i, i + blockSize);
+    for (let i = 0; i < ciphersInBlocksOf16Bytes.length; i++) {
+        const line = ciphersInBlocksOf16Bytes[i];
 
+        // check if this line has any duplicates, if so we found the one encrypted with AES in ECB mode
+        if (checkContainsDuplicates(line)) {
+            return { index: i }
         }
     }
 
-    return 'foo';
+    return { index: 0 };
 }
 
 module.exports = {
