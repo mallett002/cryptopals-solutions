@@ -401,10 +401,20 @@ function _readFileAndTransposeIntoBlocksOf16Bytes(fileName) {
 }
 
 // check if block shows up in blocks more than once
-// blocks: [[16Bytes, 16Bytes, 16Bytes], [16Bytes, 16Bytes, ...]]
-function checkContainsDuplicates(blocks) {
-    for (let i = 0; i < blocks.length; i++) {
-        
+// blocks: [[16Bytes], [16Bytes], ...]]
+// blocks represents a line. An array of Buffers
+// if there is a buffer that shows up more than once, returns true
+function checkContainsDuplicates(buffers) {
+    const visited = [];
+
+    for (let i = 0; i < buffers.length; i++) {
+        const buffer = buffers[i];
+
+        if (visited.some((visitedBuffer) => visitedBuffer.equals(buffer))) {
+            return true;
+        }
+
+        visited.push(buffer);
     }
 
     return false;
@@ -413,16 +423,13 @@ function checkContainsDuplicates(blocks) {
 /*
 1. Convert Hex-Encoded Ciphertext into Bytes:
     The ciphertexts provided are in hexadecimal form. You’ll need to convert each hex string into its corresponding byte array for processing.
-    Hint: In JavaScript, you can convert a hex string to bytes by processing each two-character hex pair.
 
 2. Divide Each Ciphertext into Blocks:
     AES uses a block size of 16 bytes (128 bits). After converting the ciphertext to bytes, you need to divide it into 16-byte blocks.
-    Hint: You can split the byte array into chunks of 16 bytes. In JavaScript, this can be done with a loop or array slicing.
     
 3. Detect Repeated Blocks:
     ECB mode will produce identical ciphertext blocks for identical plaintext blocks. This is a key characteristic of ECB’s deterministic nature.
     Look for repeated blocks within each ciphertext. If a ciphertext has any repeated 16-byte blocks, it’s very likely encrypted with ECB.
-    Hint: You can store each block in an array or set, and then check if any block appears more than once.
 
 4. Identify the Ciphertext with Repeats:
     The ciphertext that contains repeated blocks is the one encrypted with ECB. Return or print the index or the actual ciphertext.
@@ -435,11 +442,11 @@ function detectAESinECB(fileName) {
 
         // check if this line has any duplicates, if so we found the one encrypted with AES in ECB mode
         if (checkContainsDuplicates(line)) {
-            return { index: i }
+            return { index: i, line }
         }
     }
 
-    return { index: 0 };
+    return { index: -1, line: '' };
 }
 
 module.exports = {

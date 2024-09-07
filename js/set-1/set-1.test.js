@@ -104,10 +104,10 @@ describe('set-1', () => {
             Deterministic - encryption of same block with same key will always produce same result.
         */
 
-        const plaintext = detectAESinECB('8.txt');
+        const {index, line} = detectAESinECB('8.txt');
 
-        // console.log('plaintext: ', plaintext);
+        console.log('line: ', line);
 
-        expect(plaintext).toBeDefined();
+        expect(index).toBe(132);
     });
 });
