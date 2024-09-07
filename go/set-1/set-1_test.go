@@ -95,5 +95,18 @@ func TestAESinECB(t *testing.T) {
 	fmt.Println(decrypted)
 
 	assert.Len(t, decrypted, 2880)
+}
 
+func TestDetectAesInEcbMode(t *testing.T) {
+	/*
+		One of the hex-encoded ciphertexts has been encrypted with ECB. Detect it.
+		ECB is stateless - each block is processed independently; ie encrypting one block doesn't influence encryption of other.
+		Deterministic - encryption of same block with same key will always produce same result.
+	*/
+
+	index, line := DetectAESinECB("8.txt")
+
+	fmt.Printf("line: %v", line)
+
+	assert.Equal(t, 132, index)
 }

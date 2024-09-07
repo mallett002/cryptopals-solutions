@@ -394,3 +394,8 @@ func DecryptFileAESinECBmode(fileName string, key string) string {
 	// Decrypt AES
 	return DecryptAES(decoded, key)
 }
+
+func DetectAESinECB(fileName string) (int, []byte) {
+
+	return 1, []byte("foo")
+}
