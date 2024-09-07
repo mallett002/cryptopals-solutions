@@ -429,7 +429,7 @@ func DetectAESinECB(fileName string) (int, []byte) {
 
 	scanner := bufio.NewScanner(file)
 
-	// lines := make([][]byte, 0)
+	lines := make([][]byte, 0)
 	transposedLines := make([][][]byte, 0)
 
 	for scanner.Scan() {
@@ -438,6 +438,8 @@ func DetectAESinECB(fileName string) (int, []byte) {
 		// make copy of line and append into lines (scanner reuses internal buffer. Could create duplicates)
 		lineCopy := make([]byte, len(line))
 		copy(lineCopy, line)
+
+		lines = append(lines, lineCopy)
 
 		// turn lineCopy into [][]byte with each inner []byte containing 16 bytes
 		lineInChunksOf16Bytes := make([][]byte, 0)
@@ -465,7 +467,7 @@ func DetectAESinECB(fileName string) (int, []byte) {
 	// Now check to see which line in lines has duplicate chunks
 	for i, line := range transposedLines {
 		if hasDuplicates := checkLineForDuplicates(line); hasDuplicates {
-			return i, []byte("found!")
+			return i, lines[i]
 		}
 	}
 
