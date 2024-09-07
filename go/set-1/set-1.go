@@ -408,22 +408,39 @@ func DetectAESinECB(fileName string) (int, []byte) {
 
 	scanner := bufio.NewScanner(file)
 
-	lines := make([][]byte, 0)
+	lines := make([][][]byte, 0)
 
 	for scanner.Scan() {
 		line := scanner.Bytes()
 
-		// make copy of line and append into lines (scanner reuses internal buffer. Could have duplicates)
+		// make copy of line and append into lines (scanner reuses internal buffer. Could create duplicates)
 		lineCopy := make([]byte, len(line))
 		copy(lineCopy, line)
-		lines = append(lines, lineCopy)
+
+		// turn lineCopy into [][]byte with each inner []byte containing 16 bytes
+		lineInChunksOf16Bytes := make([][]byte, 0)
+
+		for start := 0; start < len(lineCopy); start += 16 {
+			end := start + 16
+
+			// if out of bounds, set end to the last index + 1 (non inclusive end)
+			if end > len(lineCopy) {
+				end = len(lineCopy)
+			}
+
+			chunk := lineCopy[start:end]
+
+			lineInChunksOf16Bytes = append(lineInChunksOf16Bytes, chunk)
+		}
+
+		lines = append(lines, lineInChunksOf16Bytes)
 	}
 
 	if err := scanner.Err(); err != nil {
 		log.Println("Error reading file:", err)
 	}
 
-	fmt.Println(lines[0])
+	// Now check to see which line in lines has duplicate []byte
 
 
 	return 1, []byte("foo")
