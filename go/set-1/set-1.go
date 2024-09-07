@@ -5,7 +5,7 @@ import (
 	"crypto/aes"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
+	// "fmt"
 	"log"
 	"math"
 	"os"
@@ -388,6 +388,27 @@ func DecryptFileAESinECBmode(fileName string, key string) string {
 	return DecryptAES(decoded, key)
 }
 
+func checkLineForDuplicates(blocks [][]byte) bool {
+    // Use a map to track seen blocks
+    seenBlocks := make(map[string]bool)
+
+    // Iterate over the blocks
+    for _, block := range blocks {
+        // Convert the block to a string to use as a map key
+        blockStr := string(block)
+
+        // Check if the block has been seen before
+        if _, exists := seenBlocks[blockStr]; exists {
+            return true // Duplicate found
+        }
+
+        // Mark the block as seen
+        seenBlocks[blockStr] = true
+    }
+
+    return false // No duplicates found
+}
+
 func DetectAESinECB(fileName string) (int, []byte) {
 	// read file as independent lines
 	// turn each line into a list of lists of 16bytes:
@@ -408,7 +429,8 @@ func DetectAESinECB(fileName string) (int, []byte) {
 
 	scanner := bufio.NewScanner(file)
 
-	lines := make([][][]byte, 0)
+	// lines := make([][]byte, 0)
+	transposedLines := make([][][]byte, 0)
 
 	for scanner.Scan() {
 		line := scanner.Bytes()
@@ -433,15 +455,19 @@ func DetectAESinECB(fileName string) (int, []byte) {
 			lineInChunksOf16Bytes = append(lineInChunksOf16Bytes, chunk)
 		}
 
-		lines = append(lines, lineInChunksOf16Bytes)
+		transposedLines = append(transposedLines, lineInChunksOf16Bytes)
 	}
 
 	if err := scanner.Err(); err != nil {
 		log.Println("Error reading file:", err)
 	}
 
-	// Now check to see which line in lines has duplicate []byte
-
+	// Now check to see which line in lines has duplicate chunks
+	for i, line := range transposedLines {
+		if hasDuplicates := checkLineForDuplicates(line); hasDuplicates {
+			return i, []byte("found!")
+		}
+	}
 
 	return 1, []byte("foo")
 }
