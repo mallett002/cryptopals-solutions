@@ -439,6 +439,7 @@ func DetectAESinECB(fileName string) (int, []byte) {
 		lineCopy := make([]byte, len(line))
 		copy(lineCopy, line)
 
+		// populate the initial lines to return the line at the end with the index
 		lines = append(lines, lineCopy)
 
 		// turn lineCopy into [][]byte with each inner []byte containing 16 bytes
@@ -471,5 +472,5 @@ func DetectAESinECB(fileName string) (int, []byte) {
 		}
 	}
 
-	return 1, []byte("foo")
+	return 1, []byte("Not found")
 }
