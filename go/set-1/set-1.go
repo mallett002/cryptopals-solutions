@@ -5,18 +5,11 @@ import (
 	"crypto/aes"
 	"encoding/base64"
 	"encoding/hex"
-
-	// "strings"
-
-	// "fmt"
-	// "sync"
-
-	// "io"
+	"fmt"
 	"log"
 	"math"
 	"os"
 	"path/filepath"
-	// "regexp"
 )
 
 func HexToBase64(input string) string {
@@ -396,6 +389,42 @@ func DecryptFileAESinECBmode(fileName string, key string) string {
 }
 
 func DetectAESinECB(fileName string) (int, []byte) {
+	// read file as independent lines
+	// turn each line into a list of lists of 16bytes:
+	// [
+	// 		[[16bytes], [16bytes], [16bytes]] line
+	// 		[[16bytes], [16bytes], [16bytes]] line
+	// 		...
+	// ]
+	// figure out which line has duplicates. return the index of that line and the line itself
+
+	file, err := os.Open(filepath.Join("..", "data", fileName))
+
+	if err != nil {
+		log.Fatalf("unable to read file: %v", err)
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	lines := make([][]byte, 0)
+
+	for scanner.Scan() {
+		line := scanner.Bytes()
+
+		// make copy of line and append into lines (scanner reuses internal buffer. Could have duplicates)
+		lineCopy := make([]byte, len(line))
+		copy(lineCopy, line)
+		lines = append(lines, lineCopy)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Println("Error reading file:", err)
+	}
+
+	fmt.Println(lines[0])
+
 
 	return 1, []byte("foo")
 }
