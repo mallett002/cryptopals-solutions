@@ -373,6 +373,82 @@ function decryptFileAESinECBmode(fileName, key) {
     return decryptAES(cipherText, key);
 }
 
+/**
+ * Reads a file with hex-encoded AES-ECB encrypted ciphertexts, 
+ * converts each line into a byte array, and splits each byte array into blocks of 16 bytes.
+ *
+ * @param {string} fileName - The name of the file to be read. Each line in the file is a hex-encoded ciphertext.
+ * @returns {Array<Array<Buffer>>} - A list of lists where each inner array represents a line of ciphertext 
+ *                                   divided into 16-byte blocks.
+ *                                   Format: [[[16Bytes, 16Bytes, ...]], [[16Bytes, 16Bytes, ...]], ...]
+ */
+function _readFileAndTransposeIntoBlocksOf16Bytes(fileName) {
+    const file = fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8'); // simply read in the file as text
+    const buffers = file.split('\n').map(line => Buffer.from(line, 'hex')); // create a list of buffers that hold bytes for each line (they are hex, so treat them accordingly)
+
+    // Create the final structure: a list of lists where each inner list contains 16-byte blocks
+    const buffersInBlocksOf16Bytes = buffers.map(buffer => {
+        const blocks = [];
+
+        for (let i = 0; i < buffer.length; i += 16) {
+            blocks.push(buffer.subarray(i, i + 16)); // Split buffer into 16-byte blocks
+        }
+
+        return blocks;
+    });
+
+    return buffersInBlocksOf16Bytes;
+}
+
+// check if block shows up in blocks more than once
+// blocks: [[16Bytes], [16Bytes], ...]]
+// blocks represents a line. An array of Buffers
+// if there is a buffer that shows up more than once, returns true
+function checkContainsDuplicates(buffers) {
+    const visited = [];
+
+    for (let i = 0; i < buffers.length; i++) {
+        const buffer = buffers[i];
+
+        if (visited.some((visitedBuffer) => visitedBuffer.equals(buffer))) {
+            return true;
+        }
+
+        visited.push(buffer);
+    }
+
+    return false;
+}
+
+/*
+1. Convert Hex-Encoded Ciphertext into Bytes:
+    The ciphertexts provided are in hexadecimal form. You’ll need to convert each hex string into its corresponding byte array for processing.
+
+2. Divide Each Ciphertext into Blocks:
+    AES uses a block size of 16 bytes (128 bits). After converting the ciphertext to bytes, you need to divide it into 16-byte blocks.
+    
+3. Detect Repeated Blocks:
+    ECB mode will produce identical ciphertext blocks for identical plaintext blocks. This is a key characteristic of ECB’s deterministic nature.
+    Look for repeated blocks within each ciphertext. If a ciphertext has any repeated 16-byte blocks, it’s very likely encrypted with ECB.
+
+4. Identify the Ciphertext with Repeats:
+    The ciphertext that contains repeated blocks is the one encrypted with ECB. Return or print the index or the actual ciphertext.
+*/
+function detectAESinECB(fileName) {
+    const ciphersInBlocksOf16Bytes = _readFileAndTransposeIntoBlocksOf16Bytes(fileName);
+
+    for (let i = 0; i < ciphersInBlocksOf16Bytes.length; i++) {
+        const line = ciphersInBlocksOf16Bytes[i];
+
+        // check if this line has any duplicates, if so we found the one encrypted with AES in ECB mode
+        if (checkContainsDuplicates(line)) {
+            return { index: i, line }
+        }
+    }
+
+    return { index: -1, line: '' };
+}
+
 module.exports = {
     hexToBase64,
     xorHexStrings,
@@ -385,6 +461,7 @@ module.exports = {
     breakRepeatingKeyXOR,
     repeatingKeyXORForFile,
     decryptFileAESinECBmode,
+    detectAESinECB,
 };
 
 // 1111
