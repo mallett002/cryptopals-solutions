@@ -104,9 +104,8 @@ func TestDetectAesInEcbMode(t *testing.T) {
 		Deterministic - encryption of same block with same key will always produce same result.
 	*/
 
-	index, line := DetectAESinECB("8.txt")
+	var aesDetection AesECBDetection = DetectAESinECB("8.txt")
 
-	fmt.Printf("line: %v", line)
-
-	assert.Equal(t, 132, index)
+	fmt.Printf("line: %v", aesDetection.line)
+	assert.Equal(t, 132, aesDetection.index)
 }

@@ -409,16 +409,33 @@ func checkLineForDuplicates(blocks [][]byte) bool {
     return false // No duplicates found
 }
 
-func DetectAESinECB(fileName string) (int, []byte) {
-	// read file as independent lines
-	// turn each line into a list of lists of 16bytes:
-	// [
-	// 		[[16bytes], [16bytes], [16bytes]] line
-	// 		[[16bytes], [16bytes], [16bytes]] line
-	// 		...
-	// ]
-	// figure out which line has duplicates. return the index of that line and the line itself
+type AesECBDetection struct {
+	index int
+	line []byte
+}
 
+func findLineWithDuplicateBlocks(transposedLines [][][]byte, lines [][]byte) AesECBDetection {
+	for i, line := range transposedLines {
+		if hasDuplicates := checkLineForDuplicates(line); hasDuplicates {
+			return AesECBDetection{
+				index: i,
+				line: lines[i],
+			}
+		}
+	}
+
+	return AesECBDetection{}
+}
+
+// reads file as independent lines
+// turns each line into a list of lists of 16bytes:
+// [
+// 		[[16bytes], [16bytes], [16bytes]] line
+// 		[[16bytes], [16bytes], [16bytes]] line
+// 		...
+// ]
+// figures out which line has duplicates and returns the index of that line and the line itself
+func DetectAESinECB(fileName string) AesECBDetection {
 	file, err := os.Open(filepath.Join("..", "data", fileName))
 
 	if err != nil {
@@ -465,12 +482,5 @@ func DetectAESinECB(fileName string) (int, []byte) {
 		log.Println("Error reading file:", err)
 	}
 
-	// Now check to see which line in lines has duplicate chunks
-	for i, line := range transposedLines {
-		if hasDuplicates := checkLineForDuplicates(line); hasDuplicates {
-			return i, lines[i]
-		}
-	}
-
-	return 1, []byte("Not found")
+	return findLineWithDuplicateBlocks(transposedLines, lines)
 }
