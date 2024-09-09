@@ -5,18 +5,11 @@ import (
 	"crypto/aes"
 	"encoding/base64"
 	"encoding/hex"
-
-	// "strings"
-
 	// "fmt"
-	// "sync"
-
-	// "io"
 	"log"
 	"math"
 	"os"
 	"path/filepath"
-	// "regexp"
 )
 
 func HexToBase64(input string) string {
@@ -393,4 +386,103 @@ func DecryptFileAESinECBmode(fileName string, key string) string {
 
 	// Decrypt AES
 	return DecryptAES(decoded, key)
+}
+
+func checkLineForDuplicates(blocks [][]byte) bool {
+    // Use a map to track seen blocks
+    seenBlocks := make(map[string]bool)
+
+    // Iterate over the blocks
+    for _, block := range blocks {
+        // Convert the block to a string to use as a map key
+        blockStr := string(block)
+
+        // Check if the block has been seen before
+        if _, exists := seenBlocks[blockStr]; exists {
+            return true // Duplicate found
+        }
+
+        // Mark the block as seen
+        seenBlocks[blockStr] = true
+    }
+
+    return false // No duplicates found
+}
+
+type AesECBDetection struct {
+	index int
+	line []byte
+}
+
+func findLineWithDuplicateBlocks(transposedLines [][][]byte, lines [][]byte) AesECBDetection {
+	for i, line := range transposedLines {
+		if hasDuplicates := checkLineForDuplicates(line); hasDuplicates {
+			return AesECBDetection{
+				index: i,
+				line: lines[i],
+			}
+		}
+	}
+
+	return AesECBDetection{}
+}
+
+/* 
+	- Reads file as independent lines
+	- Turns each line into a list of lists of 16bytes:
+		[
+			[[16bytes], [16bytes], [16bytes]] line
+			[[16bytes], [16bytes], [16bytes]] line
+			...
+		]
+	- Figures out which line has duplicates and returns the index of that line and the line itself
+*/
+func DetectAESinECB(fileName string) AesECBDetection {
+	file, err := os.Open(filepath.Join("..", "data", fileName))
+
+	if err != nil {
+		log.Fatalf("unable to read file: %v", err)
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	lines := make([][]byte, 0)
+	transposedLines := make([][][]byte, 0)
+
+	for scanner.Scan() {
+		line := scanner.Bytes()
+
+		// make copy of line and append into lines (scanner reuses internal buffer. Could create duplicates)
+		lineCopy := make([]byte, len(line))
+		copy(lineCopy, line)
+
+		// populate the initial lines to return the line at the end with the index
+		lines = append(lines, lineCopy)
+
+		// turn lineCopy into [][]byte with each inner []byte containing 16 bytes
+		lineInChunksOf16Bytes := make([][]byte, 0)
+
+		for start := 0; start < len(lineCopy); start += 16 {
+			end := start + 16
+
+			// if out of bounds, set end to the last index + 1 (non inclusive end)
+			if end > len(lineCopy) {
+				end = len(lineCopy)
+			}
+
+			chunk := lineCopy[start:end]
+
+			lineInChunksOf16Bytes = append(lineInChunksOf16Bytes, chunk)
+		}
+
+		transposedLines = append(transposedLines, lineInChunksOf16Bytes)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Println("Error reading file:", err)
+	}
+
+	return findLineWithDuplicateBlocks(transposedLines, lines)
 }
