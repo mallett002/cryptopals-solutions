@@ -1,3 +1,5 @@
+const {getPaddedPlainText} = require('./c9.js');
+
 describe('Set-2: "block cipher cryptography"', () => {
     test('Implement PKCS#7 padding', () => {
         /*
