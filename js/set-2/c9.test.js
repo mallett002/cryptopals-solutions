@@ -1,4 +1,4 @@
-const {getPaddedPlainText} = require('./c9.js');
+const {pkcsNumber7} = require('./c9.js');
 
 describe('Set-2: "block cipher cryptography"', () => {
     test('Implement PKCS#7 padding', () => {
@@ -11,7 +11,7 @@ describe('Set-2: "block cipher cryptography"', () => {
         */
        const plainText = 'YELLOW SUBMARINE';
 
-       const withPadding = getPaddedPlainText(plainText, 20);
+       const withPadding = pkcsNumber7(plainText, 20);
        
        expect(withPadding).toStrictEqual("YELLOW SUBMARINE\x04\x04\x04\x04");
     });

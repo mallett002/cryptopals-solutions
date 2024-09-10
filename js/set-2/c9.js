@@ -1,4 +1,4 @@
-function getPaddedPlainText(plainText, blockSize) {
+function pkcsNumber7(plainText, blockSize) {
     const EOT = 4;
     let plainTextBytes = Buffer.from(plainText, 'utf-8');
 
@@ -12,5 +12,5 @@ function getPaddedPlainText(plainText, blockSize) {
 }
 
 module.exports = {
-    getPaddedPlainText,
+    pkcsNumber7,
 }
