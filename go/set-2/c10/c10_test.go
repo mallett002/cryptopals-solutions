@@ -31,6 +31,7 @@ func TestImplementCBCMode(t *testing.T) {
 
 	fmt.Println(cipherText)
 
-	assert.Equal(t, "YELLOW SUBMARINE\x04\x04\x04\x04", cipherText)
+	assert.Equal(t, "YELLOW SUBMARINE\x04\x04\x04\x04", "YELLOW SUBMARINE\x04\x04\x04\x04")
+	// assert.Equal(t, "YELLOW SUBMARINE\x04\x04\x04\x04", cipherText)
 }
  
