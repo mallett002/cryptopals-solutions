@@ -25,11 +25,11 @@ func TestImplementCBCMode(t *testing.T) {
 		- But before each encryption, XOR the plaintext block with the previous ciphertext block (starting with IV for first block)	
 	*/
 	fileName := "10.txt"
-	key := "YELLOW SUBMARINE"
+	key := []byte("YELLOW SUBMARINE")
 
 	cipherText := ImplementCBCMode(fileName, key);
 
-	fmt.Println(cipherText)
+	fmt.Println(string(cipherText))
 
 	assert.Equal(t, "YELLOW SUBMARINE\x04\x04\x04\x04", "YELLOW SUBMARINE\x04\x04\x04\x04")
 	// assert.Equal(t, "YELLOW SUBMARINE\x04\x04\x04\x04", cipherText)

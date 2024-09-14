@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math"
 	"os"
 	"path/filepath"
 	"bufio"
@@ -56,6 +55,7 @@ func decodeBase64(data []byte) []byte {
 	return decoded
 }
 
+// Todo: this function will probably change
 func DecryptAES(data []byte, key string) string {
 	cipher, err := aes.NewCipher([]byte(key))
 	if err != nil {
@@ -77,18 +77,29 @@ func DecryptAES(data []byte, key string) string {
 }
 
 func xor(prevBlock []byte, currBlock []byte) []byte {
-	var maxLength = int(math.Max(float64(len(prevBlock)), float64(len(currBlock))))
-	var xordBytes []byte = make([]byte, maxLength)
+	var xordBytes []byte = make([]byte, BLOCK_SIZE)
 
-	for i := 0; i < maxLength; i++ {
+	for i := 0; i < BLOCK_SIZE; i++ {
 		xordBytes[i] = prevBlock[i] ^ currBlock[i]
 	}
 	
 	return xordBytes
 }
 
-func encryptAES(data []byte, key string) string {
-	cipher, err := aes.NewCipher([]byte(key))
+func padPKCS7(data []byte) []byte {
+	EOT := 4
+	amtOfPadding := 0
+	
+	for len(data) % BLOCK_SIZE != 0 {
+		amtOfPadding++
+		data = append(data, byte(EOT))
+	}
+
+	return data
+}
+
+func encryptAESECB(data []byte, key []byte) []byte {
+	cipher, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -99,11 +110,12 @@ func encryptAES(data []byte, key string) string {
 	// break data into key-sized chunks and encrypt them chunk by chunk (ECB mode)
 	for i := 0; i < amtOfBlocks; i++ {
 		// - encrypt each block
-		// - But before each encryption, XOR the plaintext block with the previous ciphertext block (starting with IV for first block)	
+		// - But before each encryption:
+		// 	- XOR the plaintext block with the previous ciphertext block (starting with IV for first block)	
 		start := i * BLOCK_SIZE
 		end := (i + 1) * BLOCK_SIZE
 
-		// XOR block with previous ciphertext
+		// Get previous block
 		var previousBlock []byte
 
 		if i == 0 {
@@ -114,19 +126,21 @@ func encryptAES(data []byte, key string) string {
 			previousBlock = encryptedBytes[prevStart:prevEnd]
 		}
 
-		// XOR current plaintext block with previous ciphertext block:
+		// XOR current plaintext block with previous ciphertext block
 		currentBlock := data[start:end]
 		xordBytes := xor(previousBlock, currentBlock)
 
+		// Do encryption
 		cipher.Encrypt(encryptedBytes[start:end], xordBytes)
 	}
 
-	return string(encryptedBytes)
+	return encryptedBytes
 }
 
-func ImplementCBCMode(fileName string, key string) string {
+func ImplementCBCMode(fileName string, key []byte) []byte {
 	data := readFileAsBytes(fileName)
 	decoded := decodeBase64(data)
+	padded := padPKCS7(decoded)
 
-	return encryptAES(decoded, key)
+	return encryptAESECB(padded, key)
 }
