@@ -55,25 +55,43 @@ func decodeBase64(data []byte) []byte {
 	return decoded
 }
 
-// Todo: this function will probably change
-func DecryptAES(data []byte, key string) string {
-	cipher, err := aes.NewCipher([]byte(key))
+/*
+	Encrypt:
+		- XOR prev cipherText, starting with IV, with current plaintext block
+		- encrypt the result
+
+	Decrypt:
+		- decrypt to get the XOR'd version
+		- XOR block with prev plainText starting with IV
+*/
+func DecryptAESECB(cipheredBytes []byte, key []byte) []byte {
+	cipher, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	plainText := make([]byte, len(data))
-	amtOfBlocks := len(plainText) / BLOCK_SIZE
+	xoredBytes := make([]byte, len(cipheredBytes))
+	plainTextBytes := make([]byte, len(cipheredBytes))
+	amtOfBlocks := len(plainTextBytes) / BLOCK_SIZE
 
-	// break data into key-sized chunks and decrypt them chunk by chunk
+	cipher.Decrypt(xoredBytes, cipheredBytes)
+
+	// break cipheredBytes into key-sized chunks and decrypt them chunk by chunk
 	for i := 0; i < amtOfBlocks; i++ {
 		start := i * BLOCK_SIZE
 		end := (i + 1) * BLOCK_SIZE
 
-		cipher.Decrypt(plainText[start:end], data[start:end])
+		var prevBlock []byte = getIV()
+		if i != 0 {
+			prevBlock = xoredBytes[(i - 1) * BLOCK_SIZE : start]
+		}
+
+		currentBlock := xoredBytes[start:end]
+
+		plainTextBytes = append(plainTextBytes, xor(prevBlock, currentBlock)...)
 	}
 
-	return string(plainText)
+	return plainTextBytes
 }
 
 func xor(prevBlock []byte, currBlock []byte) []byte {
