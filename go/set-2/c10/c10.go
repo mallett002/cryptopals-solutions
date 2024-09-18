@@ -21,6 +21,16 @@ func getIV() []byte {
 	return []byte(iv)
 }
 
+func GetIV() []byte {
+	iv := ""
+
+	for i := 0; i < BLOCK_SIZE; i++ {
+		iv += "\x00"
+	}
+
+	return []byte(iv)
+}
+
 func readFileAsBytes(fileName string) []byte {
 	file, err := os.Open(filepath.Join(".", fileName))
 
@@ -64,31 +74,35 @@ func decodeBase64(data []byte) []byte {
 		- decrypt to get the XOR'd version
 		- XOR block with prev plainText starting with IV
 */
-func DecryptAESECB(cipheredBytes []byte, key []byte) []byte {
+func DecryptAESCBC(cipheredBytes []byte, key []byte) []byte {
 	cipher, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	xoredBytes := make([]byte, len(cipheredBytes))
 	plainTextBytes := make([]byte, len(cipheredBytes))
 	amtOfBlocks := len(plainTextBytes) / BLOCK_SIZE
 
-	cipher.Decrypt(xoredBytes, cipheredBytes)
+	// start prev plaintext block with the IV
+	var prevBlock []byte = getIV()
 
-	// break cipheredBytes into key-sized chunks and decrypt them chunk by chunk
 	for i := 0; i < amtOfBlocks; i++ {
 		start := i * BLOCK_SIZE
 		end := (i + 1) * BLOCK_SIZE
 
-		var prevBlock []byte = getIV()
-		if i != 0 {
-			prevBlock = xoredBytes[(i - 1) * BLOCK_SIZE : start]
-		}
+		// Decrypt the current block
+		var decryptedBlock []byte = make([]byte, BLOCK_SIZE)
 
-		currentBlock := xoredBytes[start:end]
+		cipher.Decrypt(decryptedBlock, cipheredBytes[start:end])
 
-		plainTextBytes = append(plainTextBytes, xor(prevBlock, currentBlock)...)
+		// XOR decrypted block with previous ciphertext
+		currentPlainText := xor(prevBlock, decryptedBlock)
+
+		// store result in plaintext slice
+		copy(plainTextBytes[start:end], currentPlainText)
+
+		// set prevBlock to current ciphertext block
+		prevBlock = cipheredBytes[start:end]
 	}
 
 	return plainTextBytes
@@ -116,7 +130,7 @@ func padPKCS7(data []byte) []byte {
 	return data
 }
 
-func encryptAESECB(data []byte, key []byte) []byte {
+func encryptAESCBC(data []byte, key []byte) []byte {
 	cipher, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal(err)
@@ -124,6 +138,8 @@ func encryptAESECB(data []byte, key []byte) []byte {
 
 	encryptedBytes := make([]byte, len(data))
 	amtOfBlocks := len(encryptedBytes) / BLOCK_SIZE
+
+	var previousBlock []byte = getIV()
 
 	// break data into key-sized chunks and encrypt them chunk by chunk (ECB mode)
 	for i := 0; i < amtOfBlocks; i++ {
@@ -133,23 +149,14 @@ func encryptAESECB(data []byte, key []byte) []byte {
 		start := i * BLOCK_SIZE
 		end := (i + 1) * BLOCK_SIZE
 
-		// Get previous block
-		var previousBlock []byte
-
-		if i == 0 {
-			previousBlock = getIV()
-		} else {
-			prevStart := (i - 1) * BLOCK_SIZE
-			prevEnd := i * BLOCK_SIZE
-			previousBlock = encryptedBytes[prevStart:prevEnd]
-		}
-
 		// XOR current plaintext block with previous ciphertext block
 		currentBlock := data[start:end]
 		xordBytes := xor(previousBlock, currentBlock)
 
 		// Do encryption
 		cipher.Encrypt(encryptedBytes[start:end], xordBytes)
+
+		previousBlock = encryptedBytes[start:end]
 	}
 
 	return encryptedBytes
@@ -160,5 +167,5 @@ func ImplementCBCMode(fileName string, key []byte) []byte {
 	decoded := decodeBase64(data)
 	padded := padPKCS7(decoded)
 
-	return encryptAESECB(padded, key)
+	return encryptAESCBC(padded, key)
 }

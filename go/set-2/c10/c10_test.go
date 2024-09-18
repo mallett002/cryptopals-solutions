@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"testing"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestImplementCBCMode(t *testing.T) {
@@ -28,11 +27,7 @@ func TestImplementCBCMode(t *testing.T) {
 	key := []byte("YELLOW SUBMARINE")
 
 	cipherText := ImplementCBCMode(fileName, key);
-	decrypted := DecryptAESECB(cipherText, key)
+	decrypted := DecryptAESCBC(cipherText, key)
 
 	fmt.Println(string(decrypted))
-
-	assert.Equal(t, "YELLOW SUBMARINE\x04\x04\x04\x04", "YELLOW SUBMARINE\x04\x04\x04\x04")
-	// assert.Equal(t, "YELLOW SUBMARINE\x04\x04\x04\x04", cipherText)
 }
- 
