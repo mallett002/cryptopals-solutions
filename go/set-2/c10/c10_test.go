@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"testing"
+	"encoding/base64"
 )
 
 func TestImplementCBCMode(t *testing.T) {
@@ -28,6 +29,7 @@ func TestImplementCBCMode(t *testing.T) {
 
 	cipherText := ImplementCBCMode(fileName, key);
 	decrypted := DecryptAESCBC(cipherText, key)
-
-	fmt.Println(string(decrypted))
+	base64Encoded := base64.StdEncoding.EncodeToString(decrypted)
+	
+	fmt.Println(base64Encoded)
 }

@@ -118,18 +118,11 @@ func xor(prevBlock []byte, currBlock []byte) []byte {
 	return xordBytes
 }
 
-func padPKCS7(data []byte) []byte {
-	EOT := 4
-	amtOfPadding := 0
-	
-	for len(data) % BLOCK_SIZE != 0 {
-		amtOfPadding++
-		data = append(data, byte(EOT))
-	}
-
-	return data
-}
-
+/*
+	* Encrypt AES in CBC mode:
+		* Takes previously encrypted block (cipherText), starting with IV, and XORs it with the current plaintext block
+		* Encrypts the XOR result and appends the encrypted block to the ciphertext result
+*/
 func encryptAESCBC(data []byte, key []byte) []byte {
 	cipher, err := aes.NewCipher(key)
 	if err != nil {
@@ -139,9 +132,10 @@ func encryptAESCBC(data []byte, key []byte) []byte {
 	encryptedBytes := make([]byte, len(data))
 	amtOfBlocks := len(encryptedBytes) / BLOCK_SIZE
 
+	// Start previous cipherText block with IV (Initialization Vector)
 	var previousBlock []byte = getIV()
 
-	// break data into key-sized chunks and encrypt them chunk by chunk (ECB mode)
+	// break data into key-sized chunks and encrypt them chunk by chunk
 	for i := 0; i < amtOfBlocks; i++ {
 		// - encrypt each block
 		// - But before each encryption:
@@ -165,7 +159,6 @@ func encryptAESCBC(data []byte, key []byte) []byte {
 func ImplementCBCMode(fileName string, key []byte) []byte {
 	data := readFileAsBytes(fileName)
 	decoded := decodeBase64(data)
-	padded := padPKCS7(decoded)
 
-	return encryptAESCBC(padded, key)
+	return encryptAESCBC(decoded, key)
 }
