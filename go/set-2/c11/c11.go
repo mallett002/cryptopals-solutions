@@ -7,7 +7,7 @@ import (
 	"math/big"
 )
 
-func GenerateRandomAESKey(byteLength int) []byte {
+func GenerateRandomBytes(byteLength int) []byte {
 	token := make([]byte, byteLength)
 
 	_, err := rand.Read(token)
@@ -18,10 +18,11 @@ func GenerateRandomAESKey(byteLength int) []byte {
 	return token
 }
 
-func GenerateRandomInt() int {
-	min := big.NewInt(5)
-	max := big.NewInt(10)
-	diff := big.NewInt(0).Sub(max, min)
+func GenerateRandomInt(min int64, max int64) int {
+	minBig := big.NewInt(min)
+	maxBig := big.NewInt(max)
+
+	diff := big.NewInt(0).Sub(maxBig, minBig)
 	diffPlusOne := big.NewInt(0).Add(diff, big.NewInt(1))
 
 	nBig, err := rand.Int(rand.Reader, diffPlusOne)
@@ -29,7 +30,7 @@ func GenerateRandomInt() int {
 		log.Fatalf("error generating random number: %v", err)
 	}
 
-	n := big.NewInt(0).Add(nBig, min).Int64()
+	n := big.NewInt(0).Add(nBig, minBig).Int64()
 
 	return int(n)
 }
@@ -39,10 +40,18 @@ func GenerateRandomInt() int {
 // 	- uses random IVs each time for CBC
 // Detects which mode (ECB || CBC) used
 func EncryptionOracle(plaintext []byte) []byte {
-	randomKey := GenerateRandomAESKey(16)	
+	randomKey := GenerateRandomBytes(16)	
+	prevText := GenerateRandomBytes(GenerateRandomInt(5, 10))
+	postText := GenerateRandomBytes(GenerateRandomInt(5, 10))
 
+
+	newPlaintext := append(prevText, plaintext...)
+	newPlaintext = append(newPlaintext, postText...)
+
+	fmt.Printf("prevText: %v\n", prevText)
+	fmt.Printf("postText: %v\n", postText)
+	fmt.Printf("newPlaintext: %v\n", newPlaintext)
 	fmt.Printf("random key: %v\n", randomKey)
-	fmt.Printf("random int: %v\n", GenerateRandomInt())
 
 
 	return []byte("hi")

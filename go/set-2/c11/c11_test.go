@@ -7,7 +7,7 @@ import (
 
 func TestECBAndCBCDetectionOracle(t *testing.T) {
 	// Write function to generate random AES key (16 random bytes)
-	randomKey := GenerateRandomAESKey(16)
+	randomKey := GenerateRandomBytes(16)
 	fmt.Println(len(randomKey))
 
 	// Write function that uses this random key generation and encrypts data with it
