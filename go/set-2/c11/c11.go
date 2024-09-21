@@ -35,6 +35,8 @@ func GenerateRandomInt(min int64, max int64) int {
 	return int(n)
 }
 
+// todo: combine set-2 in same file like set-1. Will re-use a lot of it...
+
 // Appends 5-10 random bytes before plaintext and 5-10 bytes after plaintext
 // Encrypts ECB 1/2 the time and CBC other half - rand(2) each time to decide
 // 	- uses random IVs each time for CBC
