@@ -217,12 +217,32 @@ func getBitTrueOrFalse() int {
 }
 
 
+func encryptAES_ECB(plainText []byte, key []byte) []byte {
+	cipher, err := aes.NewCipher(key)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cipherText := make([]byte, len(plainText))
+	amtOfBlocks := len(cipherText) / BLOCK_SIZE
+
+	// break plainText into key-sized chunks and decrypt them chunk by chunk (ECB mode)
+	for i := 0; i < amtOfBlocks; i++ {
+		start := i * BLOCK_SIZE // 0
+		end := (i + 1) * BLOCK_SIZE // 16
+
+		cipher.Encrypt(cipherText[start:end], plainText[start:end])
+	}
+
+	return cipherText
+}
+
 // Appends 5-10 random bytes before plaintext and 5-10 bytes after plaintext
 // Encrypts ECB 1/2 the time and CBC other half - rand(2) each time to decide
 // 	- uses random IVs each time for CBC
 // Detects which mode (ECB || CBC) used
 func EncryptionOracle(plaintext []byte) []byte {
-	randomKey := GenerateRandomBytes(16)	
+	key := GenerateRandomBytes(16)	
 	prevText := GenerateRandomBytes(GenerateRandomInt(5, 10))
 	postText := GenerateRandomBytes(GenerateRandomInt(5, 10))
 
@@ -230,18 +250,13 @@ func EncryptionOracle(plaintext []byte) []byte {
 	newPlaintext := append(prevText, plaintext...)
 	newPlaintext = append(newPlaintext, postText...)
 
-	fmt.Printf("prevText: %v\n", prevText)
-	fmt.Printf("postText: %v\n", postText)
-	fmt.Printf("newPlaintext: %v\n", newPlaintext)
-	fmt.Printf("random key: %v\n", randomKey)
-
 	// pick ECB or CBC 50% of time
 	if getBitTrueOrFalse() == 1 {
 		fmt.Println("Encrypting with ECB mode")
-	} else {
-		fmt.Println("Encrypting with CBC mode")
-	}
+		return encryptAES_ECB(newPlaintext, key)
+	} 
 
+	fmt.Println("Encrypting with CBC mode")
 
 	return []byte("hi")
 }
