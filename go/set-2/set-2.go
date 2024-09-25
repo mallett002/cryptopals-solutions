@@ -10,6 +10,8 @@ import (
 	"crypto/aes"
 	"crypto/rand"
 	"math/big"
+	mathRand "math/rand"
+	"time"
 )
 
 func PKSNumber7(input string, byteCount int) string {
@@ -194,9 +196,9 @@ func GenerateRandomInt(min int64, max int64) int {
 	maxBig := big.NewInt(max)
 
 	diff := big.NewInt(0).Sub(maxBig, minBig)
-	diffPlusOne := big.NewInt(0).Add(diff, big.NewInt(1))
+	maxExclusive := big.NewInt(0).Add(diff, big.NewInt(1))
 
-	nBig, err := rand.Int(rand.Reader, diffPlusOne)
+	nBig, err := rand.Int(rand.Reader, maxExclusive)
 	if err != nil {
 		log.Fatalf("error generating random number: %v", err)
 	}
@@ -206,7 +208,14 @@ func GenerateRandomInt(min int64, max int64) int {
 	return int(n)
 }
 
-// todo: combine set-2 in same file like set-1. Will re-use a lot of it...
+func getBitTrueOrFalse() int {
+	// Seed the random number generator
+	mathRand.New(mathRand.NewSource(time.Now().UnixNano()))
+
+	// Generate a random number between 0 and 1
+	return mathRand.Intn(2)
+}
+
 
 // Appends 5-10 random bytes before plaintext and 5-10 bytes after plaintext
 // Encrypts ECB 1/2 the time and CBC other half - rand(2) each time to decide
@@ -225,6 +234,13 @@ func EncryptionOracle(plaintext []byte) []byte {
 	fmt.Printf("postText: %v\n", postText)
 	fmt.Printf("newPlaintext: %v\n", newPlaintext)
 	fmt.Printf("random key: %v\n", randomKey)
+
+	// pick ECB or CBC 50% of time
+	if getBitTrueOrFalse() == 1 {
+		fmt.Println("Encrypting with ECB mode")
+	} else {
+		fmt.Println("Encrypting with CBC mode")
+	}
 
 
 	return []byte("hi")
