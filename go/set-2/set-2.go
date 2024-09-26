@@ -246,7 +246,6 @@ func EncryptionOracle(plaintext []byte) []byte {
 	prevText := GenerateRandomBytes(GenerateRandomInt(5, 10))
 	postText := GenerateRandomBytes(GenerateRandomInt(5, 10))
 
-
 	newPlaintext := append(prevText, plaintext...)
 	newPlaintext = append(newPlaintext, postText...)
 
@@ -258,5 +257,5 @@ func EncryptionOracle(plaintext []byte) []byte {
 
 	fmt.Println("Encrypting with CBC mode")
 
-	return []byte("hi")
+	return encryptAESCBC(newPlaintext, key)
 }
