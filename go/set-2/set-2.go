@@ -1,13 +1,29 @@
 package main
 
 import (
+	// "fmt"
 	"os"
 	"path/filepath"
 	"bufio"
 	"log"
 	"encoding/base64"
 	"crypto/aes"
+	"crypto/rand"
+	"math/big"
+	mathRand "math/rand"
+	"time"
 )
+
+func PKSNumber7(input string, byteCount int) string {
+	EOT := 4
+	inputBytes := []byte(input)
+
+	for len(inputBytes) < byteCount {
+		inputBytes = append(inputBytes, byte(EOT))
+	}
+
+	return string(inputBytes)
+}
 
 const BLOCK_SIZE = 16
 
@@ -32,7 +48,7 @@ func GetIV() []byte {
 }
 
 func readFileAsBytes(fileName string) []byte {
-	file, err := os.Open(filepath.Join(".", fileName))
+	file, err := os.Open(filepath.Join("..", "data", fileName))
 
 	if err != nil {
 		log.Fatalf("unable to read file: %v", err)
@@ -161,4 +177,113 @@ func ImplementCBCMode(fileName string, key []byte) []byte {
 	decoded := decodeBase64(data)
 
 	return encryptAESCBC(decoded, key)
+}
+
+func GenerateRandomBytes(byteLength int) []byte {
+	token := make([]byte, byteLength)
+
+	_, err := rand.Read(token)
+	if err != nil {
+		log.Fatalf("error generating random key: %v", err)
+	}
+
+	return token
+}
+
+func GenerateRandomInt(min int64, max int64) int {
+	minBig := big.NewInt(min)
+	maxBig := big.NewInt(max)
+
+	diff := big.NewInt(0).Sub(maxBig, minBig)
+	maxExclusive := big.NewInt(0).Add(diff, big.NewInt(1))
+
+	nBig, err := rand.Int(rand.Reader, maxExclusive)
+	if err != nil {
+		log.Fatalf("error generating random number: %v", err)
+	}
+
+	n := big.NewInt(0).Add(nBig, minBig).Int64()
+
+	return int(n)
+}
+
+func getBitTrueOrFalse() int {
+	// Seed the random number generator
+	mathRand.New(mathRand.NewSource(time.Now().UnixNano()))
+
+	// Generate a random number between 0 and 1
+	return mathRand.Intn(2)
+}
+
+
+func encryptAES_ECB(plainText []byte, key []byte) []byte {
+	cipher, err := aes.NewCipher(key)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cipherText := make([]byte, len(plainText))
+	amtOfBlocks := len(cipherText) / BLOCK_SIZE
+
+	// break plainText into key-sized chunks and decrypt them chunk by chunk (ECB mode)
+	for i := 0; i < amtOfBlocks; i++ {
+		start := i * BLOCK_SIZE // 0
+		end := (i + 1) * BLOCK_SIZE // 16
+
+		cipher.Encrypt(cipherText[start:end], plainText[start:end])
+	}
+
+	return cipherText
+}
+
+// Appends 5-10 random bytes before plaintext and 5-10 bytes after plaintext
+// Encrypts ECB 1/2 the time and CBC other half - rand(2) each time to decide
+// 	- uses random IVs each time for CBC
+// Detects which mode (ECB || CBC) used
+func EncryptionOracle(plaintext []byte) ([]byte, []byte, string) {
+	key := GenerateRandomBytes(16)	
+	prevText := GenerateRandomBytes(GenerateRandomInt(5, 10))
+	postText := GenerateRandomBytes(GenerateRandomInt(5, 10))
+
+	newPlaintext := append(prevText, plaintext...)
+	newPlaintext = append(newPlaintext, postText...)
+
+	// pick ECB or CBC 50% of time
+	if getBitTrueOrFalse() == 1 {
+		cipherText := encryptAES_ECB(newPlaintext, key)
+
+		return cipherText, key, "ECB"
+	} 
+
+	cipherText := encryptAESCBC(newPlaintext, key)
+
+	return cipherText, key, "CBC"
+}
+
+func decryptAesEcb(data []byte, key []byte) []byte {
+	cipher, err := aes.NewCipher(key)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	plainText := make([]byte, len(data))
+	amtOfBlocks := len(plainText) / BLOCK_SIZE
+
+	// break data into key-sized chunks and decrypt them chunk by chunk (ECB mode)
+	for i := 0; i < amtOfBlocks; i++ {
+		start := i * BLOCK_SIZE // 0
+		end := (i + 1) * BLOCK_SIZE // 16
+
+		cipher.Decrypt(plainText[start:end], data[start:end])
+	}
+
+	return plainText
+}
+
+func DecryptionOracle(cipherText []byte, key []byte, mode string) []byte {
+	if mode == "ECB" {
+		return decryptAesEcb(cipherText, key)
+	}
+
+	return DecryptAESCBC(cipherText, key)
 }
