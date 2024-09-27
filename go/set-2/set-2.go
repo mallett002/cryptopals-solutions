@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"os"
 	"path/filepath"
 	"bufio"
@@ -241,7 +241,7 @@ func encryptAES_ECB(plainText []byte, key []byte) []byte {
 // Encrypts ECB 1/2 the time and CBC other half - rand(2) each time to decide
 // 	- uses random IVs each time for CBC
 // Detects which mode (ECB || CBC) used
-func EncryptionOracle(plaintext []byte) []byte {
+func EncryptionOracle(plaintext []byte) ([]byte, []byte, string) {
 	key := GenerateRandomBytes(16)	
 	prevText := GenerateRandomBytes(GenerateRandomInt(5, 10))
 	postText := GenerateRandomBytes(GenerateRandomInt(5, 10))
@@ -251,11 +251,40 @@ func EncryptionOracle(plaintext []byte) []byte {
 
 	// pick ECB or CBC 50% of time
 	if getBitTrueOrFalse() == 1 {
-		fmt.Println("Encrypting with ECB mode")
-		return encryptAES_ECB(newPlaintext, key)
+		cipherText := encryptAES_ECB(newPlaintext, key)
+
+		return cipherText, key, "ECB"
 	} 
 
-	fmt.Println("Encrypting with CBC mode")
+	cipherText := encryptAESCBC(newPlaintext, key)
 
-	return encryptAESCBC(newPlaintext, key)
+	return cipherText, key, "CBC"
+}
+
+func decryptAesEcb(data []byte, key []byte) []byte {
+	cipher, err := aes.NewCipher(key)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	plainText := make([]byte, len(data))
+	amtOfBlocks := len(plainText) / BLOCK_SIZE
+
+	// break data into key-sized chunks and decrypt them chunk by chunk (ECB mode)
+	for i := 0; i < amtOfBlocks; i++ {
+		start := i * BLOCK_SIZE // 0
+		end := (i + 1) * BLOCK_SIZE // 16
+
+		cipher.Decrypt(plainText[start:end], data[start:end])
+	}
+
+	return plainText
+}
+
+func DecryptionOracle(cipherText []byte, key []byte, mode string) []byte {
+	if mode == "ECB" {
+		return decryptAesEcb(cipherText, key)
+	}
+
+	return DecryptAESCBC(cipherText, key)
 }

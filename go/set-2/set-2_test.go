@@ -57,9 +57,12 @@ func TestECBAndCBCDetectionOracle(t *testing.T) {
 	fmt.Println(len(randomKey))
 
 	// Write function that uses this random key generation and encrypts data with it
-	input := "In case I don't see ya, good morning, good afternoon, and good night!"
+	input := "In case I don't see ya, good afternoon, good evening, and good night!"
 
-	cipherText := EncryptionOracle([]byte(input))
+	cipherText, key, mode := EncryptionOracle([]byte(input))
+	plainText := DecryptionOracle(cipherText, key, mode)
 
-	fmt.Println(string(cipherText))
+	fmt.Printf("mode: %v\n", mode)
+	fmt.Printf("cipherText: %v\n", string(cipherText))
+	fmt.Printf("plainText: %v\n", string(plainText))
 }
