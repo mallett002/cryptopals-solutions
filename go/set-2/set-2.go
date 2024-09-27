@@ -48,7 +48,6 @@ func GetIV() []byte {
 }
 
 func readFileAsBytes(fileName string) []byte {
-	// file, err := os.Open(filepath.Join(".", fileName))
 	file, err := os.Open(filepath.Join("..", "data", fileName))
 
 	if err != nil {
