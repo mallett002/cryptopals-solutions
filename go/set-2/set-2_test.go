@@ -72,4 +72,6 @@ func TestByteAtATimeECBDecryptionSimple(t *testing.T) {
 
 	cipherText := EncryptEcbBuffers([]byte(input))
 	fmt.Println(string(cipherText))
+
+	// Left off at https://cryptopals.com/sets/2/challenges/12: "Base64 decode the string before appending it. Do not base64 decode the string by hand; make your code do it. The point is that you don't know its contents."
 }
