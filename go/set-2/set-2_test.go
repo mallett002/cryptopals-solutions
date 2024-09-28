@@ -66,3 +66,10 @@ func TestECBAndCBCDetectionOracle(t *testing.T) {
 	fmt.Printf("cipherText: %v\n", string(cipherText))
 	fmt.Printf("plainText: %v\n", string(plainText))
 }
+
+func TestByteAtATimeECBDecryptionSimple(t *testing.T) {
+	input := "In case I don't see ya, good afternoon, good evening, and good night!"
+
+	cipherText := EncryptEcbBuffers([]byte(input))
+	fmt.Println(string(cipherText))
+}

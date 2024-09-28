@@ -14,6 +14,10 @@ import (
 	"time"
 )
 
+const SINGLE_RANDOM_KEY = "Skol Vikings !!!"
+
+
+
 func PKSNumber7(input string, byteCount int) string {
 	EOT := 4
 	inputBytes := []byte(input)
@@ -286,4 +290,12 @@ func DecryptionOracle(cipherText []byte, key []byte, mode string) []byte {
 	}
 
 	return DecryptAESCBC(cipherText, key)
+}
+
+
+func EncryptEcbBuffers(plainText []byte) []byte {
+	encodedStr := readFileAsBytes("12.txt")
+	newPlaintext := append(plainText, encodedStr...)
+
+	return encryptAES_ECB(newPlaintext, []byte(SINGLE_RANDOM_KEY))
 }
